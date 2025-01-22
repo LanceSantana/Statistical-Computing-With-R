@@ -59,8 +59,3 @@ install.packages("palmerpenguins")
 - Explore relationships in the `palmerpenguins` dataset.
 - Perform ANOVA and regression modeling.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/statistical-analysis-project.git
-   cd statistical-analysis-project
-   ```
