@@ -1,0 +1,1575 @@
+---
+title: "Statistical Analysis Project"
+subtitle: "STAT 107"
+author: "Lance Santana"
+date: "2024-12-13"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    code-line-numbers: true
+    page-layout: full
+  pdf:
+    code-line-numbers: true
+    fontsize: 10pt
+error: true
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+# Packages
+
+Load any packages you plan to use here.
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+```
+
+# Problem 1 -- Fundamentals (20 points)
+
+Programming in an any language requires an understanding of its syntax
+and semantics. This first set of questions and puzzles are about how
+different kinds of data are represented, the various constructs that
+manipulate the flow of R code, and writing simple functions to build
+reusable abstractions to solve problems.
+
+## A. Data Types (4 points)
+
+These warm-up questions test your ability to recall and apply basic data
+types in R.
+
+### Q1 (1 point)
+
+What are the **4** basic data **types** we've used in R?
+
+1.  integer
+2.  double
+3.  character
+4.  logical
+
+### Q2 (1 point)
+
+What is the primary difference between an atomic `vector` and a `list`
+in R?
+
+A atomic vector has to have all of the same data type while a list can
+store a variety of types of data.
+
+### Q3 (1 point)
+
+How does R represent **categorical** and **ordinal** data?
+
+R uses factor to store categorical and ordinal data. Since this data
+does not have an intuitive order it creates a vector with different
+levels at which the various types are categorized. Ordinal data is given
+a range values to make an pseudo order.
+
+### Q4 (1 point)
+
+Write R code to represent the following table, **using the given
+specification**.
+
+| name             | height | mass | species |
+|------------------|--------|------|---------|
+| Obi-Wan Kenobi   | 182    | 77   | Human   |
+| Anakin Skywalker | 188    | 84   | Human   |
+| Grievous         | 216    | 159  | Kaleesh |
+| R2-D2            | 96     | 32   | Droid   |
+
+-   `name`: should be of type `character`.
+-   `height`: should be of type `integer`.
+-   `mass`: should be of type `double`.
+-   `species`: should be a `factor` with levels `"Human"`, `"Kaleesh"`,
+    `"Droid"`, and `"Yoda's Species"`.
+-   Store the table in a variable called `swchar`, display it, and
+    display the `species` column.
+
+```{r}
+# your code
+name <- c("Obi-Wan Kenobi", "Anakin Skywalker", "Grievous", "R2-D2")
+height <- c(as.integer(182), as.integer(188), as.integer(216), as.integer(96))
+mass <- c(as.double(77), as.double(84), as.double(159), as.double(32))
+species <- factor(c("Human", "Human", "Kaleesh", "Droid"), levels = c("Human", "Kaleesh", "Droid", "Yoda's Species"))
+
+swchar <- data.frame(name, height, mass, species)
+print(swchar)
+print(swchar$species)
+```
+
+## B. Control Flow (7 points)
+
+We learned about various constructs to create conditional statements and
+repeat instructions. This part tests your ability to identify syntax
+issues related to these constructs, and to use these constructs in
+solving small puzzles.
+
+### Q1 (4 points)
+
+Fix **syntax** and **logic** errors in the following code.
+
+The code is supposed to compute the **first 10 [triangular
+numbers](https://en.wikipedia.org/wiki/Constant-recursive_sequence#Examples)**
+using the recursive formula:
+
+$$
+s_{n} = 3 s_{n-1} - 3 s_{n-2} + s_{n-3}, \qquad s_{1} = 0, s_{2} = 1, s_{3} = 3.
+$$ Here $s_{1}$ is the first triangular number. For $s_{4}$ we have
+
+$$
+s_{4} = 3 s_{3} - 3 s_{2} + s_{1} = 3 \times 3-3 \times 1 + 0 = 6.
+$$
+
+**Make as few modifications as possible**. Display the result `s` at the
+end to check your work.
+
+-   The collection `s` should be length 10.
+-   It should begin with `0`.
+-   It should end with the 10th triangular number, `45`.
+
+```{r}
+n <- 10         # number of items in the sequence to compute
+s <- c(0, 1, 3) # the list of items
+for (i in 4:n) {
+  # get the old values
+  prev1 <- s[i-1]
+  prev2 <- s[i-2]
+  prev3 <- s[i-3]
+  
+  # compute the next number
+  next_num <- 3*prev1 - 3*prev2 + prev3
+  
+  # add the item to the collection
+  s <- c(s, next_num)
+}
+print(s)
+```
+
+### Q2 (3 points)
+
+Using the `cat()` function, write a code chunk that creates the
+following pattern:
+
+```         
+XOOOO
+OXOOO
+OOXOO
+OOOXO
+OOOOX
+```
+
+**Your code may only use `cat()`, loops, and/or conditional
+statements.**
+
+```{r}
+# your code
+for (i in 1:5){
+    if (i != 1){
+      cat("\n")
+    }
+    for (j in 1:5){
+      if (i == j){
+        cat("X")
+      }
+      else{
+        cat("O")
+      }
+    }
+  }
+```
+
+## C. Functions (7 points)
+
+Functions are essential to *functional* programming languages like R.
+This part tests your ability to identify syntax issues related to
+functions, and to write a function from scratch in solving a small
+puzzle.
+
+### Q1 (4 points)
+
+Complete the function implementing the Babylonian method for square
+roots. (4 points)
+
+The Babylonian method computes square roots using arithmetic operations.
+The recipe is
+
+$$
+x_{n+1} = \frac{1}{2}\left[x_{n} + \frac{c}{x_{n}} \right],
+$$ which defines an *iterative* algorithm. At each step, we improve our
+estimate of the square root $x_{n+1}$ using a formula that depends on
+the previous estimate $x_{n}$.
+
+-   Add 3 additional arguments to the function, **using the given
+    order**:
+
+    -   `x0`, an initial guess for the square root.
+
+    -   `maxiter`, the maximum number of iterations (or steps) **with
+        default value `10`**.
+
+    -   `epsilon`, a control parameter **with default value `0.001`**.
+
+-   Inside the `while` loop, do the following:
+
+    -   Add **one line** to update the estimate `x` using the formula
+        given above.
+
+    -   Add **one line** to update `not_converged` by checking
+        `abs(x^2 - c) > epsilon`.
+
+    -   Add **one line** to update the step counter `n`.
+
+```{r}
+sqrt.babylonian <- function(c, x0, maxiter = 10, epsilon = .001) {
+  not_converged <- c != 0           # convergence check
+  x <- ifelse(not_converged, x0, c) # current estimate
+  n <- 0                            # iteration counter
+  while (n < maxiter && not_converged) {
+    # implement the algorithm
+    x = .5 * (x + c/x)
+    not_converged <- abs(x^2 - c) > epsilon
+    n = n+1
+  }
+  if (not_converged){
+    status <- "did not"
+  }
+  else{
+    status <- "did"    
+  }
+  cat(paste("The algorithm", status, "converge after", n, "iterations."))
+  return(x)
+}
+```
+
+Use the following code chunks to check your work.
+
+**Convergence Check**: The algorithm should finish in 5 iterations.
+
+```{r}
+sqrt.babylonian(pi^2, 1)
+```
+
+**Iterations Check**: The algorithm should only take 3 steps.
+
+```{r}
+sqrt.babylonian(pi^2, 1, maxiter = 3)
+```
+
+**Zero Check**: The algorithm should converge without taking any steps.
+
+```{r}
+sqrt.babylonian(0, 1)
+```
+
+[**Wikipedia
+Example**](https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Example):
+The algorithm should converge after 4 steps.
+
+```{r}
+sqrt.babylonian(125348, 600, epsilon = 1e-3)
+```
+
+### Q2 (3 points)
+
+Write a function that computes the minimum and maximum of a collection
+of numbers. (4 points)
+
+-   The function should be named `extrema`.
+-   The function should accept a single input, `the_numbers`.
+-   The function should return a **named** `list` with `min` reporting
+    the minimum and `max` reporting the maximum.
+-   **You may not use `min()`, `max()`, `sort()`, or any other function
+    that would immediately solve the problem**. The point is to
+    *implement* a solution.
+
+Use the following variables as *test inputs* to check whether your
+function is working as expected.
+
+```{r}
+set.seed(2024)
+p1C1_test1 <- c(-10)      # it should work for collections with only 1 number
+p1C1_test2 <- c(10)
+p1C1_test3 <- c(-1, 0, 1) # easy check
+p1C1_test4 <- rnorm(10)   # harder check
+```
+
+```{r}
+# your code
+extrema <- function(the_numbers){
+  min <- the_numbers[1]
+  max <- the_numbers[1]
+  for (n in 1:length(the_numbers)) {
+    if (max < the_numbers[n]){
+      max <-the_numbers[n]
+    }
+    if (min > the_numbers[n]){
+      min <- the_numbers[n]      
+    }
+  }
+  numlist <- list(Max = max, Min = min)
+  return(numlist)
+}
+```
+
+```{r}
+extrema(p1C1_test1)
+extrema(p1C1_test2)
+extrema(p1C1_test3)
+extrema(p1C1_test4)
+```
+
+### Q3 (2 points)
+
+The following code extracts the numeric data from the `iris` dataset as
+a `matrix` object and displays the last 5 rows.
+
+```{r}
+X <- as.matrix(iris[, 1:4])
+tail(X, n = 5)
+```
+
+The following function takes a numeric data vector `x` and number `c`.
+It is used to assign weights to each value $x_{i}$ using the rule
+
+$$
+x_i \mapsto e^{-c(x_i - \mu)^2},
+$$
+
+where $\mu$ is the sample mean of the data
+$\mathbf{x} = (x_{1}, x_{2}, \ldots x_{n})$.
+
+```{r}
+exponential_weights <- function(x, c) {
+  mu <- mean(x)
+  w <- exp(-c * (x-mu)^2)
+  return(w)
+}
+```
+
+-   Using a single call to R's `apply()` function **and** the code
+    provided above, compute weights for data in **each column** using
+    the fixed value `c = 6`.
+-   Call the result `iris_weights`.
+-   **Display only the last 5 rows** of `iris_weights`.
+
+::: callout-tip
+## Hint
+
+You **do not** need to use an anonymous function.
+:::
+
+```{r}
+# your code
+iris_weights <- apply(X, 2, exponential_weights, c = 6)
+tail(iris_weights, n = 5)
+```
+
+# Problem 2 -- Probability (15 points)
+
+R has many useful built-in functions for statistics and probability.
+This problem is about the various functions in R that implement
+fundamental concepts from probability.
+
+## A. Distributions (5 points)
+
+### Q1 (1 point)
+
+Let $X$ be a random variable which obeys a Normal distribution with mean
+10 and variance 0.25. That is, $X \sim \mathcal{N}(10, 0.25)$. Use an R
+function to evaluate $\Pr(X \le 12)$.
+
+```{r}
+# your code
+var = .25
+stdv = sqrt(var)
+prob_value <- pnorm(q = 12, mean = 10, sd = stdv)
+prob_value
+
+```
+
+### Q2 (1 point)
+
+Let $Y$ be a random variable which obeys a Binomial distribution with
+$n = 10$ trials and success probability $p = 0.3$. That is,
+$Y \sim \mathrm{Binomial}(10, 0.3)$. Use an R function to evaluate
+$\Pr(Y > 3)$.
+
+```{r}
+# your code
+prob_value <- pbinom(q = 3, size = 10, prob = .3)
+prob_value_2 <- 1 - prob_value
+prob_value_2
+```
+
+### Q3 (3 points)
+
+Let $X$ and $Y$ be random variables **as described in Parts A1 and A2**.
+Assume $X$ and $Y$ are independent. Use R functions to evaluate the
+joint probability $\Pr(X > 12, Y > 5)$.
+
+```{r}
+# your code
+prob_1 <- 1 - pnorm(q = 12, mean = 10, sd = stdv)
+prob_2 <- 1- pbinom(q = 5, size = 10, prob = .5)
+prob_3 <- prob_1 * prob_2
+prob_3
+```
+
+## B. Density & Probability (5 points)
+
+### Q1 (1 point)
+
+Let $X$ be a Normal random variable **as described in Part A1**. Use an
+R function to evaluate the **density** of $X$ at $x = 10$; that is,
+evaluate $f_{X}(10)$.
+
+```{r}
+# your code
+prob_X10 <- dnorm(10, mean = 10, sd = stdv)
+prob_X10
+```
+
+### Q2 (1 point)
+
+Let $Y$ be a Binomial random variable **as described in Part A2**. Use
+an R function to evaluate the **probability** $\Pr(Y = 10)$.
+
+```{r}
+# your code
+prob_Y10 <- dbinom(10, size = 10, prob = .3)
+prob_Y10
+```
+
+### Q3 (3 points)
+
+Let $X$ be a Normal random variable **as described in Part A1**.
+**Plot** the **density** of $X$ over the range $[7, 13]$.
+
+-   Label the $x$-axis as `"Normal RV, X"`.
+-   Label the $y$-axis as `"Density"`.
+
+Your plot may display values a few values outside the specified range.
+
+```{r}
+# your code
+density <- function(x) { 
+  dnorm(x, mean = 10, sd = stdv)
+  }
+ggplot() +
+  stat_function(fun = density, color = "red", linewidth = 2) +
+  xlim(7, 13) +
+  labs(x = "Normal RV, X", y = "Density") + 
+  theme_classic()
+```
+
+## C. Quantiles (5 points)
+
+### Q1 (1 point)
+
+Let $X$ be a Normal random variable **as described in Part A1**. Use an
+R function to find a number $x$ such that $\Pr(X \le x) = 0.05$. Save
+this result in a variable named `x_lo`.
+
+```{r}
+# your code
+x_lo <- qnorm(p = .05, mean = 10, sd = stdv)
+x_lo
+```
+
+### Q2 (1 point)
+
+Let $X$ be a Normal random variable **as described in Part A1**. Use an
+R function to find a number $x$ such that $\Pr(X > x) = 0.01$. Save this
+result in a variable named `x_hi`.
+
+```{r}
+# your code
+prob <- (1 - .01)
+x_hi <- qnorm(p = (prob), mean = 10, sd = stdv)
+x_hi
+```
+
+### Q3 (3 points)
+
+Let $X$ be a Normal random variable **as described in Part A1**. Using
+your plotting code **from Part B3**, add a **red**, **dashed** line to
+higlight `x_lo` and a **blue**, **dashed** line to highlight `x_hi`.
+
+```{r}
+# your code
+var = .25
+stdv = sqrt(var)
+density <- function(x) { dnorm(x, mean = 10, sd = stdv) }
+ggplot() +
+  stat_function(fun = density, color = "black", linewidth = 1.5) +
+  geom_vline(xintercept = x_lo, color = "red", linewidth = 1, lty = 2) +
+  geom_vline(xintercept = x_hi, color = "blue", linewidth = 1, lty = 2) +
+  xlim(7, 13) +
+  labs(
+    x = "Normal RV, X",
+    y = "Density"
+  ) + 
+  theme_minimal()
+```
+
+# Problem 3 -- Simulation (20 points)
+
+This problem tests your ability to create a simulation study in R by
+applying basic concepts from probability.
+
+A teacher distributes a multiple choice exam to their students. The exam
+has 20 questions, and each question has answers "A", "B", "C", "D". Each
+question exactly one correct answer. There is an old piece of an advice
+that if you do not know the answer to a multiple choice question, you
+should always select the same option;for example, "C". We will do a
+simulation study to test this idea.
+
+Suppose a student thinks they know answer to a question and they select
+the correct answer with probability $p$. For the remaining $1-p$ percent
+of the time they guess the answer. The student takes one of two
+strategies when guessing: (i) guess at random with each letter being
+equally likely, or (ii) always select the same answer (i.e. always pick
+"C").
+
+## A. Writing a Simulation (10 points)
+
+### Q1 (2 points)
+
+First we need a way to generate an exam In R code, give an example of
+how to generate an answer key with 20 questions. Each answer must be one
+of "A", "B", "C", or "D" with each option being equally likely.
+
+```{r}
+# your code
+answer_key <- sample(c("A", "B", "C", "D"), size = 20, replace = TRUE, prob = c(.25, .25, .25, .25))
+answer_key
+```
+
+### Q2 (3 points)
+
+**Take your code from Part A1** and *generalize it* by putting it inside
+a function.
+
+-   Call the function `make_answer_key`.
+-   The function should take a single input `num_questions` indicating
+    the number of questions on the exam.
+-   It should return an answer key as a `character` vector of length
+    `num_questions`.
+
+```{r}
+# your code
+make_answer_key <- function(num_questions){
+  answer_key <- sample(c("A", "B", "C", "D"), size = num_questions, replace = TRUE, prob = c(.25, .25, .25, .25))
+  return(answer_key)
+}
+```
+
+### Q3 (2 points)
+
+Write a function to simulate the student answering **one** question.
+
+-   Call the function `answer_the_question`.
+-   It should take a `character` input `correct_answer`, which is one of
+    "A", "B", "C", or "D".
+-   It should also take a numeric input `p` which represents the
+    probability that the student knows and selects the correct answer.
+-   It should also take a `character` input `strategy`, which is one of
+    "guess", "A", "B", "C", or "D".
+-   If `strategy` is equal to `"guess"`, then the student selects one of
+    the 4 letters at random with equal probability. Otherwise, if
+    `strategy` is equal to one of the letters "A", "B", "C", or "D",
+    then the student **always** picks that letter when they don't know
+    the answer.
+-   You may raise an error if `strategy` **is not** one of "guess", "A",
+    "B", "C", or "D" by using the following code:
+    `rlang::abort("User input error:`strategy`must be on of 'guess', 'A', 'B', 'C', or 'D'.")`.
+    It is not necessary but may help you catch errors.
+-   The function should return `TRUE` if the student picked the correct
+    answer and `FALSE` otherwise.
+
+```{r}
+# your code
+answer_the_question <- function(correct_answer, p, strategy){
+  if (as.double(p) >= runif(1)){
+    return(TRUE)
+  }
+  else {
+    if (strategy == "guess"){
+      guess_answer <- sample(c("A", "B", "C", "D"), size = 1, replace = TRUE, prob = c(.25, .25, .25, .25))
+      if (guess_answer == correct_answer){
+        return(TRUE)
+      }
+      else{
+        return(FALSE)
+      }
+    }
+    else if (strategy == "A" || strategy == "B" || strategy == "C" || strategy == "D"){
+      if (strategy == correct_answer){
+        return(TRUE)
+      }
+      else {
+        return(FALSE)
+      }
+    }
+  }
+}
+```
+
+The following code chunks can be used to test your implementation.
+
+**Case**: Student absolutely knows the answer.
+
+```{r}
+answer_the_question(correct_answer = "A", p = 1.0, strategy = "guess") # TRUE
+```
+
+**Case**: Student absolutely does not know the answer.
+
+```{r}
+set.seed(107)
+answer_the_question(correct_answer = "A", p = 0.0, strategy = "guess") # FALSE
+
+set.seed(107)
+answer_the_question(correct_answer = "A", p = 0.0, strategy = "A") # TRUE
+
+set.seed(107)
+answer_the_question(correct_answer = "A", p = 0.0, strategy = "B") # FALSE
+```
+
+### Q4 (3 points)
+
+**Using your functions from Parts A2 and A3**, write a function to
+simulate a student taking the multiple choice exam.
+
+-   Call the function `take_the_test`.
+-   It should take an input `num_questions` representing the number of
+    questions on the exam.
+-   It should also take an input `p` representing the probability that
+    the student knows and selects the correct answer.
+-   It should also take an input `strategy` representing the strategy
+    that the student uses when they do not know the answer to a
+    question.
+-   It should return the **total** number of questions the student got
+    correct.
+
+```{r}
+# your code
+take_the_test <- function(num_questions, p, strategy){
+  test <- make_answer_key(num_questions)
+  correct_count <- 0
+  for (q in test){
+    if (answer_the_question(q, p, strategy)){
+      correct_count = correct_count + 1
+    }
+  }
+  return(correct_count)
+}
+```
+
+#### Sanity Check
+
+The following code chunk can be used to *partially* test your
+implementation.
+
+-   **Scenario**: Exam has 5 questions, student uses the "guess"
+    strategy and is 100% confident.
+-   **Expected**: Returns 5.
+
+```{r}
+take_the_test(5, 1.0, "guess") # 5
+```
+
+**In addition**, you should implement the following two (2) test cases.
+
+-   *These are a good checks to make sure you understand the
+    simulation*.
+-   Make sure you call the test function with the correct inputs.
+-   The simulation involves probabilistic code. **Make the tests
+    reproducible!**
+
+#### Additional Test Cases
+
+-   **Scenario**: Exam has 1000 questions, student uses the "guess"
+    strategy and is 0% confident.
+-   **Expected**: Returns $\approx 250$ with high probability.
+
+```{r}
+# your code
+set.seed(100)
+take_the_test(1000, 0.0, "guess")
+```
+
+-   **Scenario**: Exam has 1000 questions, student uses the "C" strategy
+    and is 90% confident.
+-   **Expected**: Returns $\approx 900$ with high probability.
+
+```{r}
+# your code
+set.seed(100)
+take_the_test(1000, 0.9, "C")
+```
+
+## B. Using a Simulation (10 points)
+
+### Q1 (2 points)
+
+**Using your code from Part A4**, simulate two students taking a
+20-question exam.
+
+-   Assume one student is confident 50% of the time and that they use
+    the "guess" strategy.
+-   Assume the other student is confident 50% of the time and that they
+    use the "C" strategy.
+-   **Make the result reproducible!**
+
+```{r}
+# your code
+set.seed(50)
+take_the_test(20, 0.5, "guess")
+take_the_test(20, 0.5, "C")
+
+```
+
+### Q2 (2 points)
+
+**Repeat your simulations in Part B1**, each 1000 times. Store your
+results in two **different** vectors.
+
+-   **Do not display the results, please!** You will lose points.
+-   **Make the results reproducible.**
+
+```{r}
+# your code
+set.seed(100)
+student_scores_1 <- vector()
+student_scores_2 <- vector()
+for (i in 1:1000){
+  student_scores_1 <- c(student_scores_1, take_the_test(20, 0.5, "guess"))
+  student_scores_2 <- c(student_scores_2, take_the_test(20, 0.5, "C"))
+}
+```
+
+### Q3 (2 points)
+
+**Using your results from Part B2**, create a `data.frame` or `tibble`
+(your choice) to store your data.
+
+-   It should have a column `number_correct` that records each student's
+    results on each exam.
+-   It should have a column `strategy` that records the strategy the
+    student used.
+-   The data frame object should have 2000 rows and 2 columns.
+-   **Display** the first 5 rows **and** the last 5 rows.
+-   **Hint**: The function `rep()` can be helpful in repeating values
+    when constructing vectors.
+
+```{r}
+# your code
+number_correct <- c(student_scores_1, student_scores_2)
+strategy <- c(rep("Guess", 1000), rep("C", 1000))
+grade_frame <- data.frame(number_correct, strategy)
+
+head(grade_frame, 5)
+tail(grade_frame, 5)
+```
+
+### Q4 (2 points)
+
+**Using your data frame object from Part B3**, create a plot of your
+choice to communicate the results of your simulation.
+
+-   The plot should contain information about **both** strategies.
+-   Make sure to label any important elements.
+-   The plot can show your results in a single plot window or
+    side-by-side.
+
+```{r}
+# your code
+ggplot(grade_frame, aes(x = number_correct, y = strategy, fill = strategy)) + 
+  geom_boxplot(color = "black") +
+  labs(title = "Guess Strategy", x = "Number Correct", y  = "Strategy") + 
+  xlim(0, 20) +
+  theme_minimal()
+
+```
+
+### Q5 (2 points)
+
+**Describe** the figure you created in **Part B4**.
+
+-   What type of plot is it?
+-   What information is displayed on the axes (if any)?
+-   Are there colors and/or shapes? What information do the aesthetics
+    communicate?
+-   What do you conclude about the two strategies?
+
+```{r}
+# your code
+# 1. It is a box plot
+# 2. The x axis displays the number of correct answers on a given test with a black line representing the mean. The y axis is the type of strategy used, C vesus guessing.
+# 3. The light red color represents the "C" strategy and light blue is guessing.
+# 4. Both strategies run about the same with a similar mean and spread of data. There is likely a minimal difference due to chance while sampling.
+```
+
+# Problem 4 -- Data Wrangling (20 points)
+
+## A. Loading Data (2 points)
+
+### Q1 (1 point)
+
+**Run** the following code chunk. **Write** a separate chunk to **read**
+`raw_csv_input` as a CSV file using an appropriate function.
+
+```{r}
+raw_csv_input <- "id,price,bedrooms,guestroom\n1,13300000,4,no\n2,12250000,4,no\n5,11410000,4,yes"
+```
+
+```{r}
+# your code
+read_csv(raw_csv_input)
+```
+
+### Q2 (1 point)
+
+Load the `imdb_top_1000.csv` dataset as `imdb`. Read the file using an
+appropriate function and display the first 5 rows. You will use this
+dataset for the rest of the problem.
+
+-   **If you use `read.csv()`**: set `row.names = FALSE`.
+-   **If you use `read_csv()`**: set
+    `col_types = cols(Gross = col_character())` and
+    `show_col_types = FALSE`.
+
+```{r}
+# your code
+imdb <- read_csv("imdb_top_1000.csv")
+```
+
+## B. Cleaning & Manipulating Data (8 points)
+
+### Q1 (1 point)
+
+Write code that **only** selects the following 14 columns from the
+`imdb` dataset.
+
+-   Columns: `Series_Title`, `Released_Year`, `Runtime`, `Genre`,
+    `IMDB_Rating`, `Overview`, `Meta_score`, `Director`, `Star1`,
+    `Star2`, `Star3`, `Star4`, `No_of_Votes`, and `Gross`.
+-   Display the first 3 rows.
+-   **Do not modify the `imdb` object yet.**
+
+```{r}
+# your code
+imdb_clean <- imdb[, c("Series_Title", "Released_Year", "Runtime", "Genre", "IMDB_Rating", "Overview", "Meta_score", "Director", "Star1", "Star2", "Star3", "Star4", "No_of_Votes", "Gross")]
+head(imdb_clean, 3)
+```
+
+### Q2 (1 point)
+
+Write code that formats the `Runtime` column as an `integer` vector.
+
+-   Display the first 3 formatted values.
+-   **Do not modify the `imdb` object yet.**
+
+```{r}
+# your code
+new_runtime <- imdb$Runtime
+for (i in 1:length(new_runtime)){
+  clean_new_runtime <- str_replace_all(string = new_runtime, pattern = "\\D", replacement = "")
+  clean_new_runtime <- as.integer(clean_new_runtime)
+}
+head(new_runtime, 3)
+head(clean_new_runtime, 3)
+```
+
+### Q3 (1.5 points)
+
+Using the `Released_Year` column, create a new `character` vector that
+lists the **decade** in which the movie was released.
+
+-   The decades should be formatted as `"1920s"`, `"1990s"`, `"2000s"`,
+    and so on.
+-   If the released year is missing or is not given as a year, set its
+    decade to `NA`.
+-   Display the first 3 formatted values.
+-   **Do not modify the `imdb` object yet.**
+
+```{r}
+# your code
+release_original <- imdb$Released_Year
+release_new <- vector("character", length(imdb$Released_Year))
+index <- 1
+
+for (year in release_original){
+
+  if (nchar(year) == 4){
+      decaded_prep <- (as.numeric(year) %/% 10)
+      decade <- decaded_prep * 10
+      release_new[index] <- str_c(as.character(decade), "s", sep = "")
+      index <- index + 1
+  }
+  else{
+    decade = NA
+    index <- index + 1
+  }
+}
+head(release_original, 3)
+head(release_new, 3)
+```
+
+### Q4 (1.5 points)
+
+Create a new `character` vector by removing punctuation and
+capitalization from the `Overview` column.
+
+-   Display the first 3 items.
+-   **Do not modify the `imdb` object yet.**
+
+```{r}
+# your code
+overview_old <- imdb$Overview
+overview_clean <- vector("character", length(imdb$Overview))
+index <- 1
+
+for (overview in overview_old){
+  overview_lower <- tolower(overview)
+  overview_lower_dpc <- gsub("[[:punct:]]", "", overview_lower)
+  overview_clean[index] = overview_lower_dpc
+  index = index + 1
+}
+head(overview_clean, 3)
+```
+
+### Q5 (1.5 points)
+
+Reformat the `Gross` column as a `double` vector.
+
+-   Display the first 3 items.
+-   **Do not modify the `imdb` object yet.**
+
+```{r}
+# your code
+gross_old <- imdb$Gross
+gross_new <- vector("double", length(imdb$Gross))
+index <- 1
+
+for (gross in gross_old){
+  gross_n <- as.double(gross)
+  gross_new[index] = gross_n
+  index = index + 1
+}
+
+head(gross_new, 3)
+```
+
+### Q6 (1.5 points)
+
+**Using your code in Parts B1 through B5**, modify `imdb` to clean up
+the data.
+
+-   It should contain 14 specified columns, plus an additional `Decade`
+    column using **B3**.
+-   It should have `Runtime` formatted as integers.
+-   It should remove punctuation and capitalization from the `Overview`
+    column.
+-   Display the first 3 rows.
+
+```{r}
+# your code
+imdb <- read_csv("imdb_top_1000.csv")
+imdb <- imdb[, c("Series_Title", "Released_Year", "Runtime", "Genre", "IMDB_Rating", "Overview", "Meta_score", "Director", "Star1", "Star2", "Star3", "Star4", "No_of_Votes", "Gross")]
+
+for (i in 1:length(imdb$Runtime)){
+  new_runtime <- imdb$Runtime[i]
+  clean_new_runtime <- str_replace_all(string = new_runtime, pattern = "\\D", replacement = "")
+  imdb$Runtime[i] <- as.integer(clean_new_runtime)
+}
+
+imdb$Decade <- NA
+index <- 1
+for (year in imdb$Released_Year){
+  if (!is.na(year) && nchar(year) == 4){
+      decaded_prep <- (as.numeric(year) %/% 10)
+      decade <- decaded_prep * 10
+      imdb$Decade[index] <- str_c(as.character(decade), "s", sep = "")
+      index <- index + 1
+  }
+  else{
+    imdb$Released_Year[index] <- NA
+    index <- index + 1
+  }
+}
+
+index <- 1
+for (overview in imdb$Overview){
+  overview_lower <- tolower(overview)
+  overview_lower_dpc <- gsub("[[:punct:]]", "", overview_lower)
+  imdb$Overview[index] = overview_lower_dpc
+  index = index + 1
+}
+
+index <- 1
+for (gross in imdb$Gross){
+  gross_n <- as.numeric(gross)
+  imdb$Gross[index] = gross_n
+  index = index + 1
+}
+
+head(imdb, 5)
+```
+
+## C. Descriptive Statistics (5 points)
+
+### Q1 (2.5 points)
+
+Create a **single** summary table that answers the following questions.
+
+-   How many movies have a `Meta_score` strictly greater than 90?
+-   What are the minimum and maximum number of votes these movies
+    received?
+-   What is the median `IMDB_Rating` for these movies?
+-   Present your answers with a **single** 4-column data frame (or
+    tibble).
+
+```{r}
+# your code
+meta_90_plus <- 0
+meta_min <- imdb$Meta_score[1]
+meta_max <- imdb$Meta_score[1]
+
+for (n in 1:nrow(imdb)){
+  if(!is.na(imdb$Meta_score[n])){
+    if (imdb$Meta_score[n] > 90){
+      meta_90_plus = meta_90_plus + 1
+    }
+    if (meta_min > imdb$Meta_score[n]){
+      meta_min <- imdb$Meta_score[n]
+    }
+    if (meta_max < imdb$Meta_score[n]){
+      meta_max <- imdb$Meta_score[n]
+    }
+  }
+}
+meta_median <- median(imdb$Meta_score, na.rm = TRUE)
+meta_90_plus
+meta_min
+meta_max
+meta_median
+
+imdb_data <- data.frame(Meta_High_Scores = meta_90_plus, Min = meta_min, Max = meta_max, Median <- meta_median)
+imdb_data
+```
+
+### Q2 (2.5 points)
+
+Create a table that reports how many movies are in each genre.
+
+-   A movie may have more than one genre. It counts for every genre that
+    is assigned to it.
+-   There are a total of 21 movie genres represented in the `imdb`
+    dataset.
+
+```{r}
+# your code
+complete_g_list <- c()
+  
+for (genre_list in imdb$Genre){
+  temp_list <- unlist(strsplit(genre_list, split = ", "))
+  complete_g_list <- c(complete_g_list, temp_list)
+}
+unique_g_list <- unique(complete_g_list)
+
+g_counts <- table(complete_g_list)
+g_table <- data.frame(Genere = names(g_counts), Count = as.numeric(g_counts))
+g_table
+```
+
+## D. Visualization (5 points)
+
+### Q1 (2.5 points)
+
+Write a function that determines how many top movies an actor has
+appeared in a leading role. Use the function to compare `"Tom Hanks"`,
+`"Sigourney Weaver"`, `"Margot Robbie"`, and `"Oscar Isaac"` using a bar
+plot.
+
+-   Call the function `count_top_movies`.
+-   It should accept two inputs: a length 1 `character` object `actor`
+    and a data frame object `dataset`.
+-   It should return the number of movies the actor has appeared in,
+    based on the `Star1`, `Star2`, `Star3`, and `Star4` columns.
+-   Label your bar plot appropriately.
+-   The counts should be 14, 4, 2, and 2, respectively.
+
+```{r}
+# your code
+count_top_movies <- function(actor, dataset){
+    count <- 0
+    for (i in 1:nrow(dataset)){
+      for(star_list in c("Star1", "Star2", "Star3", "Star4")){
+        selected_a <- dataset[i, star_list]
+        if(selected_a == actor){
+          count <- count + 1
+        }
+      }
+    }
+    
+    return(count)
+}
+
+a1 <- count_top_movies("Tom Hanks", imdb)
+a2 <- count_top_movies("Sigourney Weaver", imdb)
+a3 <- count_top_movies("Margot Robbie", imdb)
+a4 <- count_top_movies("Oscar Isaac", imdb)
+
+
+actors <- c("Tom Hanks", "Sigourney Weaver", "Margot Robbie", "Oscar Isaac")
+movie_num <- c(a1, a2, a3, a4)
+data <- data.frame(actors, movie_num)
+
+
+ggplot(data, aes(x = actors, y = movie_num, fill = actors)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Number of Movies by Actor", x = "Actor Name", y = "Number of Movies") +
+  theme_classic()
+```
+
+### Q2 (2.5 points)
+
+Has the number of war movies changed over time? Create a plot to address
+this question by comparing the number of movies between two groups over
+time.
+
+-   Group 1: any movie mentioning "war" in the `Overview`.
+-   Group 2: the entire `imdb` dataset.
+-   You should omit any movies that are missing a `Decade` value.
+-   $x$-axis: `Decade`
+-   $y$-axis: the number of movies in a given decade.
+-   Label your plot and use color or shape to distinguish the two
+    groups.
+
+```{r}
+# your code
+index <- 1
+decade_war_list <- c()
+decade_list <- c()
+for (i in 1:nrow(imdb)){
+  if (!is.na(imdb$Decade[i]) && grepl("war", imdb$Overview[i])){
+    decade_war_list <- c(decade_war_list, imdb$Decade[i])
+  }
+  if (!is.na(imdb$Decade[i])){
+    decade_list <- c(decade_list, imdb$Decade[i])
+  }
+}
+group2 <- table(decade_list)
+df_group2 <- data.frame(Decade = (names(group2)), Count = as.numeric(group2), Type = "Non-War")
+
+group1 <- table(decade_war_list)
+df_group1 <- data.frame(Decade = (names(group1)), Count = as.numeric(group1), Type = "War")
+
+df_group_1_2 <- rbind(df_group1, df_group2)
+
+ggplot(df_group_1_2, aes(x = Decade, y = Count, fill = Type)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Movies by Decade", x = "Decade", y = "Count") +
+  theme_classic()
+```
+
+# Problem 5 - Text Wrangling (10 points)
+
+In this problem you will standardize the data in the following
+`data.frame`. You may convert it to a `tibble`, if you wish. This
+problems tests your ability to integrate information and formulate a
+solution to a general problem.
+
+```{r}
+zip_codes <- c("923016700", "", "913013358", "92808", "9501", "945014542", "945012176", "945018029", "94501187", "94501")
+phone_numbers <- c("7605309252", "(818) 735-0268", "818-991-2857", "714-921-9091", "510-523-1804", "5105215815", "510-337-1580", "(510)-863-9000", "510-337-1091", "510-241-0931")
+business <- data.frame(Postcode = zip_codes, Phone = phone_numbers)
+business
+```
+
+## A. Fixing ZIP codes (4 points)
+
+US postal codes are generally five digits long, or they are five digits
+with a dash (-) and four additional digits. For example: 12345 and
+12345-6789.
+
+### Q1 (1 point)
+
+Take the 6th ZIP code in the data and call it `zipcode`. Display the
+result of `length(zipcode)` and `nchar(zipcode)`.
+
+```{r}
+# your code
+zipcode <- business$Postcode[6]
+zipcode
+length(zipcode)
+nchar(zipcode)
+```
+
+### Q2 (1 point)
+
+Using `zipcode` defined in A1, write two R expressions which do the
+following:
+
+-   Extract the first 5 digits from `zipcode` and save the results as
+    `zc1`.
+-   Extract the last 4 digits from `zipcode` and save the results as
+    `zc2`.
+
+```{r}
+# your code
+zc1 <- str_sub(zipcode, 1, 5)
+zc2 <- str_sub(zipcode, -4, -1)
+zc1
+zc2
+```
+
+### Q3 (2 point)
+
+Write a function to convert a given string of numbers into a properly
+formatted US postal code.
+
+-   The function should be named `fix_postal` and it should accept a
+    single argument, `postal_code`.
+-   If there is no valid postal code, replace it with `NA`.
+-   If the postal code contains 5 digits, then it is acceptable.
+-   If the postal code contains 9 digits, then separate the first 5
+    digits and the last 4 digits with a dash, `-`.
+-   You may assume that the input `postal_code` is a single `character`
+    object and only contains digits.
+-   Your solution does not need to consider any cases not represented in
+    the data, `business`.
+-   **Do not** modify the `business` data yet. Only use it to test.
+
+```{r}
+# your code
+fix_postal <- function(postal_code){
+  if (is.na(postal_code)){
+    return(NA)
+  }
+  if (nchar(postal_code) == 5){
+    return(postal_code)
+  }
+  else if (nchar(str_replace_all(string = postal_code, pattern = "\\D", replacement = "")) == 9){
+    zipcode_fist <- substr(postal_code, start = 1, stop = 5)
+    zipcode_second <- str_sub(postal_code, -4, -1)
+    zipcode_full <- paste(zipcode_fist, "-", zipcode_second, sep = "")
+    return(zipcode_full)
+  }
+  else{
+    return(NA)
+  }
+}
+fix_postal(business$Postcode[3])
+```
+
+## B. Fixing phone numbers (4 points)
+
+US phone numbers typically have ten digits, for example:
+`(714) 781-4000`.
+
+### Q1 (1 point)
+
+Take the 8th phone number and call it `phonum1`. Write an R function,
+with a name of your choosing, which removes any **non-digit** character
+from a single `character` object. Apply it to the variable `phonum1`.
+
+```{r}
+# your code
+phonum1 <- business$Phone[8]
+remove_non_digit <- function(char_obj){
+  clean_char_obj <- str_replace_all(string = char_obj, pattern = "\\D", replacement = "")
+  return(clean_char_obj)
+}
+
+remove_non_digit(phonum1)
+```
+
+### Q2 (1 point)
+
+Take the 1st phone number and call it `phonum2`. Write an R function,
+with a name of your choosing, which formats a **pure** 10-digit
+`character` object as follows: `(AAA) BBB-CCCC`. Apply it to the
+variable `phonum2`.
+
+```{r}
+# your code
+phonum2 <- business$Phone[1]
+reformat <- function(char_obj){
+  char_obj <- remove_non_digit(char_obj)
+  charset_1 <- substr(char_obj, start = 1, stop = 3)
+  charset_2 <- substr(char_obj, start = 4, stop = 6)
+  charset_3 <- substr(char_obj, start = 7, stop = 10) 
+  full_char <- paste("(", charset_1, ")", " ", charset_2, "-", charset_3, sep = "")
+  return(full_char)
+}
+reformat(phonum2)
+```
+
+### Q3 (2 points)
+
+Write an R function which takes an **arbitrary** `character` object and
+formats it as a proper 10-digit phone number: `(AAA) BBB-CCCC`.
+
+-   You should call the function `fix_phone_number`.
+-   You should validate that the phone number **contains 10 digits**. If
+    it does, return the properly formatted number. Otherwise, return
+    `NA`.
+-   You do not need to consider any cases not represented in the
+    `business` data.
+-   Use Part B1 and B2 to help you.
+-   You **do not** need to modify the `business` data yet.
+
+```{r}
+# your code
+fix_phone_number <- function(char_obj){
+  char_obj <- remove_non_digit(char_obj)
+  if (nchar(char_obj) == 10){
+    new_char <- reformat(char_obj)
+    return(new_char)
+  }
+  else{
+    return(NA)
+  }
+}
+```
+
+## C. Putting everything together (2 points)
+
+Use `sapply()`, your function in Part A3, and your function in Part B3
+to properly format the `business` data.
+
+-   **Make sure you modify the original object**.
+-   Display the properly formatted data at the end.
+
+::: callout-tip
+### Hint
+
+Use the `USE.NAMES = FALSE` option to avoid attaching named rows.
+:::
+
+```{r}
+# your code
+business$Postcode <- sapply(business$Postcode, fix_postal, USE.NAMES = FALSE)
+business$Phone <- sapply(business$Phone, fix_phone_number, USE.NAMES = FALSE)
+business
+
+```
+
+# Problem 6 - Data Analysis (15 points)
+
+In class we investigated the connection between analysis of variance
+(ANOVA) and linear regression models. This section considers both tools
+in a basic analysis setting with one grouping variable (factor).
+
+## A. The data (1 point)
+
+-   Load the `palmerpenguins` package.
+-   Drop all rows in the `penguins` data which contain `NA` values. Call
+    this version of the data `peng`.
+
+```{r}
+# your code
+library(palmerpenguins)
+data("penguins")
+peng <- na.omit(penguins)
+```
+
+## B. ANOVA (7 points)
+
+Environment can have significant effects on biological attributes such
+as a size, measured in terms of body mass. The Palmer penguins data
+contains information about which island a particular penguin was spotted
+in. Here we explore a potential relationship between the `island` and
+`body_mass_g` variables in the `peng` data.
+
+### Q1 (1 point)
+
+-   Create and display a 2-way `table()` which tabulates the samples
+    based on which `island` and `species` a penguin belongs to.
+-   Create and display a 2-way `table()` which tabulates the samples
+    based on biological `sex` and `species`.
+
+```{r}
+# your code
+IS_table <- table(peng$island, peng$species)
+IS_table
+
+SS_table <- table(peng$sex, peng$species)
+SS_table
+```
+
+### Q2 (1.5 point)
+
+Create a boxplot that reports `body_mass_g` across each of the three (3)
+following grouping variables, one at a time:
+
+1.  `species`
+2.  `sex`
+3.  `island`
+
+Your answer can use separate plots, but there should be 3 figures in
+total.
+
+```{r}
+# your code
+ggplot(peng, aes(x = species, y = body_mass_g)) +
+  geom_boxplot(fill = "red", color = "black") + 
+  labs(title = "Body Mass by Species", x = "Species", y = "Body Mass") +
+  theme_minimal()
+
+ggplot(peng, aes(x = sex, y = body_mass_g)) +
+  geom_boxplot(fill = "blue", color = "black") + 
+  labs(title = "Body Mass by Sex", x = "Sex", y = "Body Mass") +
+  theme_minimal()
+
+ggplot(peng, aes(x = island, y = body_mass_g)) +
+  geom_boxplot(fill = "yellow", color = "black") + 
+  labs(title = "Body Mass by Island", x = "Island", y = "Body Mass") +
+  theme_minimal()
+
+
+```
+
+### Q3 (1.5 points)
+
+Use your responses in B1 and B2 to answer the following questions (Yes
+or No):
+
+1.  Do you expect a significant difference in group means based on the
+    `species` factor?
+
+    Yes
+
+2.  Do you expect a significant difference in group means based on the
+    `island` factor?
+
+    Yes
+
+3.  Do you expect a significant difference in group means based on the
+    `sex` factor?
+
+    Yes
+
+4.  Is it possible that *some* of the 3 factors considered are dependent
+    on one another?
+
+    Yes
+
+### Q4 (1.5 points)
+
+Create a variable `chinstrap` which contains only the Chinstrap
+penguins, based on the `species` variable. Then, formulate a null and
+alternative hypotheses for the mean body mass grouped by the `sex`
+variable.
+
+```{r}
+# your code
+chinstrap_p <- peng %>%
+  filter(species == "Chinstrap")
+
+print("Chinstrap male and female mean body masses are equal")
+print("Chinstrap male and female mean body masses are not equal")
+```
+
+### Q5 (1.5 point)
+
+-   Use appropriate functions **from Base R** to conduct a one-way ANOVA
+    testing whether `sex` influences average `body_mass_g` in the
+    Chinstrap penguins.
+-   State the value of the $F$-statistic for the hypothesis test.
+-   State the $p$-value for the test.
+-   Interpret the output at the $\alpha = 0.001$ level.
+-   In class we stated that a two-sided $t$-test comparing two group
+    means is equivalent to the ANOVA we just performed. **What
+    assumption is critical in making this equivalence?**
+
+```{r}
+# your code
+aov_sex_mass_C <- aov(body_mass_g ~ sex, data = chinstrap_p)
+summary(aov_sex_mass_C)
+
+print("The F stat is 27.12")
+print("The p value is 2.04e-06")
+print("The output at a = .001 is a p-value of 2.04e-06 which means reject the null hypothesis because the p value is less than alpha. ")
+print("The critical assumption in making the equivalence is that we have to assume that the varience between the two speicies is roughly equal.")
+```
+
+## C. Regression (7 points)
+
+Here we investigate a potential relationship between `flipper_length_mm`
+and `body_mass_g`, focusing solely on the Adelie penguins.
+
+### Q1 (2 point)
+
+Create a variable called `adelie` which contains the data subset of
+Adelie penguins only. Plot `flipper_length_mm` versus `body_mass_g` and
+color each point by the `sex` variable.
+
+```{r}
+# your code
+adelie <- peng %>%
+  filter(species == "Adelie")
+
+df_adelie <- data.frame(Flipper_Length = adelie$flipper_length_mm, Body_Mass = adelie$body_mass_g, Sex = adelie$sex )
+
+ggplot(df_adelie, aes(x = Flipper_Length, y = Body_Mass, fill = Sex)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Adelie by Mass and Flipper Length", x = "Flipper Length (mm)", y = "Body Mass (g)") +
+  theme_classic()
+
+
+```
+
+### Q2 (3 points)
+
+-   Create a linear model in R to implement the following simple
+    regression:
+    $[\text{flipper length}] = [\text{body mass}] \beta_{1} + \beta_{0}$.
+    Call it `model1`.
+-   State the fitted value for $\beta_0$ and $\beta_1$.
+-   State the units for the regression coefficients.
+-   Use the `summary()` function to check which coefficients are
+    significant in `model1` at the $\alpha = 0.001$ level.
+-   Comment on (i) whether the model is a good fit and (ii) whether the
+    relationship appers to hold. **Justify your answer**.
+
+```{r}
+# your code
+model1 <- lm(flipper_length_mm ~ body_mass_g, data = adelie)
+summary(model1)
+
+print("i) Since R-squared is small at around 22% this means that body mass is responsible for only 22% of the variance in the modle. This means that ther is a low level of correlation between the variables")
+print("ii) Looking at the p value is 3.4e-09 being relatively low copared to alpha value of .05 there is a low chance of difference meaning we should reject the idea there is not a segnificant relationship. A relationship appears to hold. ")
+```
+
+### Q3 (2 points)
+
+The following code implements a multiple regression model, considering
+two independent variables `body_mass_g` and `sex`.
+
+```{r}
+model2 <- lm(flipper_length_mm ~ body_mass_g + sex, adelie)
+```
+
+Use the `model2` object to answer the following questions:
+
+1.  Does the **homoskedastic** assumption appear to hold?
+2.  Use `summary()` to help you write down the regression equation for
+    this model, **with units**.
+3.  State the meaning of the intercept term.
+4.  State the $R^2$ value and its interpretation.
+
+```{r}
+# your code
+summary(model2)
+
+print("Homoskedastic does not hold.")
+print("Flipper Length (mm) = .006333 * body mass (g) - .344 * sex (if male, otherwise female is - 0)")
+print("The intercept represents the expected flipper length when there is no body mass or when body mass is equal to 0, which is unrealistic")
+print("The R^2 value is the amount of variability in one variable that can be attributed to another. In this context it represents the amount of variability of flipper length that can be attributed to mass and sex. The value is .2164 and represents that roughly 22% of the variance observed in flipper length is because of body mass and sex")
+```
