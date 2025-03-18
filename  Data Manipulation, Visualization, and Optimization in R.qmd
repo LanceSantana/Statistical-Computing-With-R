@@ -1,0 +1,588 @@
+---
+title: "Data Manipulation, Visualization, and Optimization in R"
+author: "Lance Santana"
+date: "11/12/2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    code-line-numbers: true
+  pdf:
+    code-line-numbers: true
+    fontsize: 10pt
+error: true
+---
+
+# Instructions
+
+- This set of exercises contains 4 questions total.
+- Unless otherwise stated, you may only use functions from Base R to complete the exercises. Email Dr. Landeros (`alandero@ucr.edu`) if you have any doubts, using "[STAT 107]" in the subject line.
+- Check the main Canvas page for updates.
+
+# Packages
+
+```{r}
+# load your packages here
+install.packages("dplyr")
+library(dplyr)
+install.packages("maps")
+library(maps)
+install.packages("ggplot2")
+library(ggplot2)
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+# Datasets
+
+This homework assignment uses a few datasets. Please download the required files from Canvas, as needed:
+
+- **Exercise 1**: `NBA_2022-2023_Regular.csv` can be downloaded from Canvas under `Modules > Datasets`. It was accessed from the [2022-2023 NBA Player Stats](https://www.kaggle.com/datasets/vivovinco/20222023-nba-player-stats-regular) dataset on Kaggle for regular season play. You can reference the dataset on Kaggle to learn about the different columns.
+- **Exercise 2**: `diamonds`: This dataset comes from the Tidyverse meta-package. Make sure you've installed the package, i.e. `install.packages("tidyverse")`.
+- **Exercise 3**: `Housing.csv`: This dataset comes from [Kaggle.com](https://www.kaggle.com/yasserh/housing-prices-dataset) and contains general information about housing costs. **Use the version posted on Canvas**.
+- **Exercise 4**: `capital_cities` is extracted from the `maps` package in R. Make sure to install the package and run the script in Exercise 4 to access it.
+
+
+
+# Exercise 1: Sports Analytics
+
+This exercise uses the `NBA_2022-2023_Regular.csv` dataset.
+
+**Note** Some players in the original dataset were given hybrid positions, such as `PF-SF`. These were edited to keep the number of positions to the original 5 as follows:
+
+- `PF-SF` becomes `PF` (Power Forward),
+- `SF-SG` becomes `SF` (Small Forward), and
+- `SG-SF` becomes `SG` (Shooting Guard).
+
+
+## Part (a)
+
+Read in the data:
+
+1. using `read.csv()` with the `check.names = FALSE` option,
+2. call it `NBA`, and
+3. summarize it using `summarize()`.
+
+```{r}
+# your solution
+NBA <- read.csv("NBA_2022-2023_Regular.csv", check.names = FALSE)
+NBA %>%
+  group_by(Tm) %>%
+  summarize(Age_Mean = mean(Age))
+
+
+```
+
+## Part (b)
+
+Create side-by-side boxplots of the `MP` variable broken up by `Pos` (the different positions). Make sure there are appropriate axis labels and add an informative title. Use the argument `col` **so that each boxplot is a different color** of your choice.
+
+```{r}
+# your solution
+boxplot(NBA$MP ~ NBA$Pos, 
+        xlab = "Position", 
+        ylab = "Minutes Played", 
+        main = "Minutes Played Based on Position",
+        col = c("red","orange","yellow","green","blue"))
+```
+
+
+## Part (c)
+
+Plot a histogram of any numerical variable that you wish from this data set. Put three distinctly different vertical lines indicating
+
+- the (arithmetic) mean of this variable,
+- the median of this variable, and
+- the value for a player of your choice.
+
+Include a legend for your plot and label the plot appropriately.
+
+```{r}
+# your solution
+hist(
+  NBA$Age,
+  xlab = "Age",
+  ylab = "Frequency",
+  main = "Histogram of Age",
+  col = "cyan",
+  )
+
+Age = NBA$Age
+abline(v = mean(Age), col = "blue", lwd = 2, lty = 2)
+abline(v = median(Age), col = "red", lwd = 2, lty = 2)
+abline(v = NBA$Age[NBA$Player == "Khem Birch"], col = "orange", lwd = 2, lty = 2)
+
+legend("topright",
+       legend = c("Mean", "Median", "Khem Birch"),
+       col = c("blue", "red", "orange"),
+       lwd = 2,
+       lty = 2)
+```
+
+
+## Part (d)
+
+Create a new data set that only contains players from the California NBA teams. That is, the rows where `Tm` equals:
+
+- `GSW` (Golden State Warriors),
+- `LAL` (Los Angeles Lakers),
+- `LAC` (Los Angeles Clippers), and
+- `SAC` (Sacramento Kings).
+
+Call this `NBACA`. Organize the rows of this data set first by `Pts`, and then by `G` (games played). Display the first 10 rows and 5 columns of this data set.
+
+```{r}
+NBACA <- NBA[NBA$Tm %in% c("GSW", "LAL", "LAC", "SAC"), ]
+NBACA <- NBACA[order(NBACA$Tm, NBACA$G), ]
+head(NBACA[,1:5], 10)
+```
+
+
+## Part (e)
+
+Find the proportion of players that belong to the different categories for the `Pos` (position) variable in the for the full data set, and for the `NBACA` data set. Create a plot of your choice that gives a visual representation of these proportions, and plot the proportions for each data set side-by-side. Make sure there are appropriate titles.
+
+::: callout-tip
+## Hint
+Consider `pie()` or `barplot()`.
+:::
+
+```{r}
+# your solution
+NBA_pos_proportion <- table(NBA$Pos) / nrow(NBA)
+NBACA_pos_proportion <- table(NBACA$Pos) / nrow(NBACA)
+
+combind_pos_proportion <- rbind(NBA_pos_proportion, NBACA_pos_proportion)
+
+barplot(
+  combind_pos_proportion,
+  beside = TRUE,
+  col = c("red", "blue"),
+  xlab = "Positions",
+  ylab = "Proportion",
+  main = "Positions Proportions NBA vs. NBACA"
+)
+
+legend("topleft", legend = c("NBA", "NBACA"), fill = c("red", "blue"), inset = c(.05, 0))
+
+```
+
+
+
+## Part (f)
+
+Create a scatter plot of your choice. Have the points differ in some aspect (color/shape/size/etc) based on a criteria of your choice. Include a legend for your plot. Give a brief summary of your plot (that is, explain what variable is on each axis, why some points differ, and so on).
+
+::: callout-tip
+## Hint
+The `help("points")` documentation has a list of plotting characters and their integer codes (i.e. `pch`).
+:::
+
+```{r}
+# your solution
+NBA_omit <- na.omit(NBA[, c("MP", "PTS", "Tm")])
+plot(
+  NBA_omit$MP, NBA_omit$PTS,
+  xlab = "Minutes Played",
+  ylab = "Points",
+  main = "NBA Points by Minutes Played",
+  col = ifelse(NBA_omit$Tm == "LAL", "gold", "black"),
+  pch = ifelse(NBA_omit$Tm == "LAL", 8, 16)
+)
+
+legend("topleft", legend = c("LA Lakers", "Other Teams"), col = c("gold", "black"), pch = c(8,16), title = "Team")
+print("Graph displays the relationship of points to minutes played. The x-axis represents the minutes played while the y-axis is the number of points. Thereis a linear relationship with a exponential curve at the end indicating that the more players play the more points they get. An exception to this is the outlire in the bottom right corner playing more than 40 minutes with less than 5 points.")
+```
+
+
+
+# Exercise 2: Base R vs Tidyverse
+
+This problem has you translate Base R code (given) to Tidyverse code (your work). Each part is meant to be straightforward and should illustrate the conceptual simplicity of the Tidyverse approach. **Make sure you load the required package in the "Packages" section at the beginning of this document**.
+
+## Part (a)
+
+The following code *filters rows* of `diamonds` in which the `cut` is "Ideal":
+
+```{r}
+diamonds
+diamonds[diamonds$cut == "Ideal", ] # base R
+```
+
+**Using Tidyverse functions from `dplyr`**, write an alternative but equivalent approach to *filter rows* in which the diamond `cut` is "Ideal".
+
+```{r}
+# your solution
+diamonds_filter <- diamonds %>%
+  filter(cut == "Ideal")
+diamonds_filter
+```
+
+
+
+## Part (b)
+
+The following code *selects columns* that begin with the letter "c"
+
+```{r}
+# get the column names
+data_cols <- names(diamonds)
+
+# check each column to see if they start with "c"; TRUE => the column starts with c
+col_indicators <- startsWith(data_cols, prefix = "c")
+
+# similar approach
+# col_indicators <- sapply(data_cols, startsWith, prefix = "c")
+
+# subset only the columns that satisfy our condition
+diamonds[ , col_indicators]
+```
+
+**Using Tidyverse functions from `dplyr`**, write an alternative but equivalent approach to *select columns* that start with the letter "c".
+
+```{r}
+# your solution
+diamond_filter_1 <- diamonds %>%
+  select(starts_with("c"))
+diamond_filter_1
+```
+
+
+
+## Part (c)
+
+The following code makes a *grouped boxplot* of `carat` broken down by `cut`.
+
+```{r}
+boxplot(diamonds$carat ~ diamonds$cut,
+  xlab = "Cut",
+  ylab = "Carats",
+  main = "Diamond Carats by Cut Quality"
+)
+```
+
+**Using Tidyverse functions from `ggplot2`**, write an alternative but equivalent approach to create a *similar box plot* from the `diamonds` tibble.
+
+::: callout-tip
+
+## Hint
+
+- Use `%>%` for chaining data manipulations.
+- Use `+` for combining graphical parts.
+- **Match the $x$-axis label, $y$-axis label, and plot title**.
+- Do not worry about the placement of labels.
+
+:::
+
+```{r}
+# your solution
+diamonds %>%
+  ggplot(aes(x = cut, y = carat)) +
+  geom_boxplot() +
+  labs(x = "cut", y = "carats", title = "Diamond Carats by Cut Quality")
+```
+
+
+
+# Exercise 3: Exploring Housing Data with Tidyverse
+
+This exercise uses `Housing.csv`. Load it here with `read_csv()` and call the object `Housing`.
+
+```{r}
+Housing <- read_csv("Housing.csv")
+```
+
+
+## Part (a)
+
+Create a new column called `priceM` that contains the same values in the `price` column divided by 1,000,000.  That is, it is price in 1,000,000 (million) units. In addition, change the `bedrooms` column to be an *ordered factor* type (from smallest to largest). Display `Housing` by referencing it in your code chunk.
+
+**Use this version of the data set for the rest of the assignment.**
+
+```{r}
+# your solution
+Housing <- Housing %>%
+  mutate(
+    priceM = price / 1000000,  
+    bedrooms = factor(bedrooms, ordered = TRUE)
+  )
+Housing
+```
+
+## Part (b)
+
+Create a *single tibble* summarizing *only the single-story homes*, namely those with `stories == 1`. Have this tibble report the following:
+
+- `minPM`, the minimum price recorded in millions,
+- `maxPM`, the maximum price recorded in millions,
+- `prop_pref`, the proportion of single-story homes located in a preferred area (see `prefarea`), and
+- `n`, the number of single-story homes.
+
+::: callout-tip
+
+## Hints
+
+- You should *filter* the data before *summarizing* it!
+- A *proportion* can be interpreted as the *mean* of 0s and 1s.
+- Look up the function `n()` in R/RStudio.
+- The result should have 1 row and 4 columns!
+
+:::
+
+```{r}
+# your solution
+
+single_stories <- Housing %>%
+  filter(stories == 1) %>%
+  summarize(
+    maxPM = max(priceM),
+    minPM = min(priceM),
+    prop_pref = mean(prefarea == "yes"),
+    n = n()
+  )
+single_stories
+```
+
+## Part (c)
+
+Create a *single tibble* summarizing some of the data based on both the number of `bedrooms` and `bathrooms`. Have this tibble contain the following columns for each combination:
+
+- `minPM`, the minimum price (in millions) for a given number of bedrooms and bathrooms,
+- `maxPM`, the maximum price (in millions) for a given number of bedrooms and bathrooms,
+- `prop_pref`, the proportion of observations that are in a preferred area for a given number of bedrooms and bathrooms, and
+- `n`, the number of homes with a given number of bedrooms and bathrooms.
+
+
+::: callout-tip
+
+## Hints
+
+- You should *group* the data before *summarizing* it!
+- A *proportion* can be interpreted as the *mean* of 0s and 1s.
+- Your result should have 15 rows and 6 columns! The first two (2) columns are generated automatically for you.
+
+:::
+
+```{r}
+# your solution
+bad_bath_housing <- Housing %>%
+  group_by(bedrooms, bathrooms) %>%
+  summarize(
+    minPM = min(priceM),
+    maxPM = max(priceM),
+    prop_pref = mean(prefarea == "yes"),
+    n = n() 
+  )
+bad_bath_housing
+```
+
+## Part (d)
+
+Create a *single tibble* summarizing *single-story homes in non-preferred areas* based on both the number of `bedrooms` and `bathrooms`. Have this tibble contain the following columns for each combination:
+
+- `minPM`, the minimum price (in millions) for a given number of bedrooms and bathrooms,
+- `maxPM`, the maximum price (in millions) for a given number of bedrooms and bathrooms,
+- `n`, the number of homes with a given number of bedrooms and bathrooms.
+
+Organize the tibble by the number of homes in each category *in descending order*.
+
+::: callout-tip
+
+## Hints
+
+- You need to both *group* and *filter* the data.
+- **You should only use tidyverse functions here**.
+- The result should have 8 rows and 5 columns!
+- The first row should have `n = 101` and the last row should have `n = 1`.
+
+:::
+
+```{r}
+# your solution
+np_single_story_bed_bath <- Housing %>%
+  filter(prefarea == "no", stories == 1) %>%
+  group_by(bedrooms, bathrooms) %>%
+  summarize(
+    minPM = min(priceM),
+    maxPM = max(priceM),
+    n = n() 
+  ) %>%
+  arrange(desc(n))
+np_single_story_bed_bath
+```
+
+# Exercise 4: Best Road Trip Ever
+
+There is a well-known problem in data-science/computer-science/optimization that tries to determine the best route possible between multiple destinations.  Finding the best possible route is [very difficult](https://en.wikipedia.org/wiki/P_versus_NP_problem#Results_about_difficulty_of_proof)! Instead, researchers often use *greedy* algorithms, based on heuristics, to determine the "good" route. There have been several articles online of different researchers trying to do this (For example: [https://www.digitaltrends.com/cool-tech/most-efficient-route-visit-us-states/](https://www.digitaltrends.com/cool-tech/most-efficient-route-visit-us-states/)).
+
+For this homework problem you are going to search for an efficient route that takes you to all of the US State Capitals (excluding Alaska and Hawaii). For your route you need to visit each capital city *exactly once*, and *must start and stop at the same initial city*.
+
+To create your route you will use the following "greedy" algorithm.
+
+## Solution Algorithm
+
+1. Start at some initial city.
+2. Search for the closest city that you have *not yet visited*. 
+3. Move to the city identified in Step 2. 
+4. If you still have cities you have not visited return to Step 2. Otherwise, if you visited all cities, return to starting city and you're done! 
+
+In this algorithm you need to select a *distance function* to calculate distances between cities. For example:
+
+![](https://alanderos91.github.io/BottomlessBag/HW5_Distances.png)
+
+## Setup
+
+The steps outlined below will help us determine a route. This problem is known as **The Traveling Salesman** problem. You will need the location of every US State Capital City, and it is provided below using the `maps` package in R.
+
+```{r}
+# US State Capitals (all)
+capital_cities <- us.cities[us.cities$capital==2, ]
+
+# Remove Alaska and Hawaii 
+index <- which(capital_cities$country.etc  %in% c("AK", "HI"))
+capital_cities <- capital_cities[-index, ]
+```
+
+Use the background information above to complete this problem. This [webapp](https://rpgarcia.shinyapps.io/Distances/) is also useful for checking your work.
+
+
+## Part (a)
+
+Pick two distance formulas. Write out the formulas you picked in [$LaTeX$ syntax](https://www.overleaf.com/latex/templates/a-quick-guide-to-latex/fghqpfgnxggz.pdf) below. You may assume the number of dimensions $d = 2$.
+
+**Your LaTeX**
+
+$$
+\sqrt(\sum_{n=1}^{d}(x_i-y_i)^2)
+\\
+1/d\sum_{n=1}^{d}(x_i-y_i)^2
+
+
+$$
+
+## Part (b)
+
+Create a function that computes the distance between two points, **using the Euclidean distance** defined above.
+
+- Design your function to accept *4 arguments*, $x_{1}$, $y_{1}$, $x_{2}$, $y_{2}$, in that order.
+- The pairs $(x_{1}, y_{1})$ and $(x_{2}, y_{2})$ are coordinates using longitude and latitude.
+- This is not the distance in miles. We are using longitude and latitude coordinates, so this is just a rough approximation of the relative distance between two places (does not account for Earth's curvature).
+
+```{r}
+# your solution
+euc_distance <- function(x1, y1, x2, y2){
+  sqrt((x2 -x1)^2+(y2-y1)^2)
+}
+```
+
+
+## Part (c)
+
+Use your function from **4(b)** to calculate the distance between `"Sacramento CA"` and every other capital city by using the longitude and latitude coordinates. **Add names to your result matching the corresponding capital city.**
+
+::: callout-tip
+## Hint
+
+- Consider one of the `apply`/`sapply`/`mapply`/etc functionals.
+- What is the distance between `"Sacramento CA"` and itself?
+0.000
+:::
+
+```{r}
+# your solution
+sac <- capital_cities[capital_cities$name == "Sacramento CA",]
+sac_x1 <- sac$long
+sac_y1 <- sac$lat
+
+sac_dist <- sapply(1:nrow(capital_cities), function(i){
+  euc_distance(sac_x1, sac_y1, capital_cities$long[i], capital_cities$lat[i])  
+})  
+
+names(sac_dist) <- capital_cities$name
+sac_dist
+
+```
+
+
+## Part (d)
+
+Create a loop that determines the best route to each capital city:
+
+- Pick a starting city of your choice.
+- Determine the city with the shortest distance, record what city it is, and remove it from consideration.
+- Then continue repeating these steps until you have removed every city and the loop is terminated.
+
+**You should keep a record of the order of cities to visit**.
+
+```{r}
+# your solution
+euc_distance <- function(x1, y1, x2, y2){
+  sqrt((x2 -x1)^2+(y2-y1)^2)
+}
+print(unique(capital_cities$name))
+library(maps)
+#above and some code below may be redundant to due error discovery & handling
+
+start_city_name <- "Albany NY"
+cur_city_name <- start_city_name
+
+record <- c(start_city_name)
+destinations <- capital_cities[capital_cities$name != cur_city_name, ]
+
+while (nrow(destinations) > 0){
+  cur_city <- capital_cities[capital_cities$name == cur_city_name, ]
+  if(nrow(cur_city) == 0){
+    stop("City not found")
+  }
+  cur_city_long <- as.numeric(cur_city$long)
+  cur_city_lat <- as.numeric(cur_city$lat)
+  
+  distances <- sapply(1:nrow(destinations), function(i){
+    euc_distance(cur_city_long, cur_city_lat, 
+                 as.numeric(destinations$long[i]), 
+                 as.numeric(destinations$lat[i]))
+  })
+  near_city_index <- which.min(distances)
+  near_city_name <- destinations$name[near_city_index]
+  
+  record <- c(record, near_city_name)
+  
+  cur_city_name <- near_city_name
+  
+  destinations <- destinations[-near_city_index, ]
+}
+
+record <-c(record, start_city_name)
+record
+```
+
+
+## Part (e)
+
+Plot each state capital as a point on a map of the United States. Then plot connecting lines between the cities in the order of the route you found in **4(d)**.
+
+::: callout-tip
+
+## Hints
+
+- Use the [webapp](https://rpgarcia.shinyapps.io/Distances/) to check your work. Notice that you can choose the starting city and distance metric.
+- The `lines()` function can be used to *add* **paths** to an existing plot.
+
+:::
+
+```{r}
+# your solution
+maps::map("state")
+
+points(capital_cities$long, capital_cities$lat)
+
+for (i in 1:(length(record) - 1)){
+  city1 <- capital_cities[capital_cities$name == record[i],]
+  city2 <- capital_cities[capital_cities$name == record[i + 1],]
+  
+  lines(c(as.numeric(city1$long), as.numeric(city2$long)), 
+        c(as.numeric(city1$lat), as.numeric(city2$lat)), 
+        col = "blue", lwd = 2)
+}
+```

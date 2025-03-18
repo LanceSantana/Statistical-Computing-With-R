@@ -1,0 +1,101 @@
+---
+title: "R Packages"
+author: "Lance Santana"
+date: "11-01-2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-line-numbers: true
+    embed-resources: true
+  pdf:
+    code-line-numbers: true
+    embed-resources: true
+error: true
+---
+
+# Installing Packages (not graded)
+
+This assignment and the next few homework assignments require a few packages.
+Using `install.packages()`, install the following packages: `maps`, `tidyverse`, and `wordcloud2`.
+
+- If you have issues during installation, check the console for errors.
+- Read any error messages from top to bottom.
+- If you are unable to finish the assignment due to installation issues, work with a classmate to finish the problem. Fill in all the code chunks as if you were able to use `maps` and `tidyverse` on your computer. *Make a note of the issue in your report right below this bullet point*.
+
+# State Capitals
+
+## Part (a)
+
+Load the `maps` and `tidyverse` packages with `library()`.
+
+```{r}
+library(maps)
+library(tidyverse)
+```
+
+**Do you see any conflicts in the tidyverse report?**
+No
+::: callout-tip
+## Documentation
+
+Remember that you can look up information about a package using `help(package = "<the package name>")`.
+
+:::
+
+## Part (b)
+
+Create a plot with the 48 continental US states using `map("state")` from the `maps` package. In the code chunk, add the following options:
+
+- `fig-align: center`
+- `width: 80%`
+
+::: callout-tip
+## Hint
+If you're having trouble, go back and study the output in Part (a).
+:::
+
+```{r, fig.align='center',width='80%'}
+maps ::map("state")
+```
+
+
+## Part (c)
+
+Recall that the `maps` package has a database on US cities, called `us.cities`.
+
+- Convert that object (`data.frame`) into a `tibble`, calling the new object `us.capitals`.
+- Display the first 5 rows of `us.capitals`.
+
+```{r}
+us.capitals = as_tibble(us.cities)
+head(us.capitals, 5)
+```
+
+## Part (d)
+
+Using the `filter()` function on `us.capitals`, select only the **capital** cities in the **continental US** *and* modify the variable. Display the first 10 rows.
+
+::: callout-tip
+### Hint
+
+- Note that capital cities are indicated with `capital == 2`.
+- There is more than one way to do this problem!
+
+:::
+
+```{r}
+us.capitals = us.capitals %>% filter(capital == 2 & long > -125 & long < -66.9)
+head(us.capitals, 10)
+```
+
+
+## Part (e)
+
+Plot the continental US again and add `points()` indicating capital cities using the `long` and `lat` variables.
+
+```{r}
+maps ::map("state")
+points(us.capitals$long, us.capitals$lat, col = 'red', pch = 8)
+```
+

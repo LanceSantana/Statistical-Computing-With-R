@@ -1,0 +1,255 @@
+---
+title: "Exploring R: Fundamentals and Statistical Measures"
+author: "Lance Santana"
+date: "10/9/2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    code-line-numbers: true
+---
+
+# Instructions
+
+-   This problem set contains 5 exercises in total.
+-   Exercises 4 and 5 require some background information contained in `Homework1_supplement.pdf`. Please consult this document to help you complete these exercises.
+-   **You may only use functions from Base R to complete the exercises**. Email Dr. Landeros (`alandero@ucr.edu`) if you have any doubts.
+-   Check the Canvas Discussion section for updates.
+
+## Exercise 1: Some Basic R Questions
+
+**1(a)** Which of the following object names should we not use: `T`, `1first`, `arg`, `_start`, `a`. Why should we not use these names when creating an object?
+
+T, 1first, and arg are names that should not be used when creating a object. While 1first is the only name that will not raise an error, because it starts with a number, T and arg are poor choices for practical reasons. T is used for "True" making T a convoluted name and arg is used in some functions potentially causing confusion when it comes up in code.
+
+**1(b)** In R we have many operators, more than what was discussed in class. One of the operators is `%%`. Look up this operator and describe what it does. Include information about the resource you used (website, book, R documentation).
+
+The operator %% determines the remainder after division by a specified number. This can tell you if a number is even or odd when using 2, as even numbers will return 0 and odd numbers will return 1, assuming.
+
+DataCamp (Website):
+
+<https://www.datacamp.com/doc/r/operators#:~:text=The%20%25%25%20operator%20returns%20the,divided%20by%202%20is%201.>
+
+**1(c)** Show an example of how the operator `%%` could be used to determine if a number is even or odd. Provide an explanation for your example.
+
+```{r}
+num_cats <- 7
+alone_cats <- num_cats %% 2
+print("There is")
+alone_cats
+print("alone cats")
+print("The number of cats is odd")
+```
+
+**1(d)** Another operator we did not discuss is `:`. Look up this operator and discuss what it does. Include information about the resource you used (website, book, etc).
+
+The ":" operator will generate a range between the two number on either side of the colon going from the left number to the right number. This range has a difference of one between generated numbers with the range increasing or decreasing based on the ordering around the ":' operator.
+
+ProjectPro (Website):
+
+<https://www.projectpro.io/recipes/what-is-colon-operator#:~:text=Colon%20operator%20(%22%3A%22),with%20increasing%20or%20decreasing%20sequence.&text=It%20is%20a%20binary%20operator%20i.e.%20it%20takes%20two%20arguments.>
+
+**1(e)** Show an example of how the operator `:` works.
+
+```{r}
+print("There are 5 options for lunch, please pick a number")
+Lunch_Items <- 1:5
+Lunch_Items
+```
+
+## Exercise 2: Practice with Vectors
+
+**2(a)** The Fibonacci sequence appears in many biological structures. It is formed by starting with the number 0, 1 and then adding the last two numbers to get the next number: 0, 1, 1, 2, 3, 5, 8, etc. Create *integer* vector called `int_fib` that contains the first 10 values of the Fibonacci sequence. (You can enter the values. You do not need to compute them). **Make sure to type the name of the vector so that it is displayed in your output**.
+
+```{r}
+int_fib <- c(0, 1, 1, 2, 3, 5, 8, 13, 21, 34)
+int_fib <- as.integer(int_fib)
+print("int_fib:")
+int_fib
+typeof(int_fib)
+```
+
+**2(b)** Similarly to question **2(a)**, create a *double* type vector called `dbl_fib` with the first 5 values of the Fibonacci sequence.
+
+```{r}
+dbl_fib <- c(0, 1, 1, 2, 3)
+print("dbl_fib:")
+dbl_fib
+typeof(dbl_fib)
+```
+
+**2(c)** Create a *character* vector with any elements of your choice that has length 5.
+
+```{r}
+char_vector <- c("a", "b", "c", "d", 'e')
+char_vector
+```
+
+**2(d)** Convert and redefine `int_fib` into a character vector.
+
+```{r}
+int_fib <- as.character(int_fib)
+int_fib
+```
+
+**2(e)** Use a built in function to determine how many elements are in `int_fib`, `dbl_fib`, and your vector in **2(c)**.
+
+```{r}
+print("Length of int_fib:")
+length(int_fib)
+print("Length of dbl_fib:")
+length(dbl_fib)
+```
+
+**2(f)** Output the second element of `int_fib` using its index.
+
+```{r}
+int_fib[2]
+```
+
+## Exercise 3: Coercion and Vector Types
+
+**3(a)** Vectors built using `c()` must be all of the same type. If given a combination of different types of elements, R will convert all the elements to be of the same type using a series of internal rules. Create a series of vectors that are composed of elements of different types and use the `typeof()` function to see how R decides what type of vector to create. You do not need to show intermediate steps or R code here, just fill out your results after the "--\>". The first one is filled out for you.
+
+-   integer, double --\> double
+
+-   integer, character --\> character
+
+-   integer, logical --\> integer
+
+-   double, character --\> character
+
+-   double, logical --\> double
+
+-   character, logical --\> character
+
+-   integer, double, character --\> character
+
+-   integer, double, logical --\> double
+
+-   integer, character, logical --\> character
+
+-   double, character, logical --\> character
+
+-   double, logical, integer, character --\> character
+
+**3(b)** Describe and comment on patterns that you see in 3(a). Does it look like these conversions are random?
+
+It seems like character is has the highest priority followed by double, integer, logical in that order. It makes sense that is is the order because all types can be listed in character form. Double makes sense as being secondary as integers can be displayed without transformation and T/F can be represented by 1/0. Integer makes sense as a second to last for the prior reasoning. With logical being last because it would need to change numeric data to T/F.
+
+## Exercise 4: Measures of Center
+
+For these questions use only (arithmetic/logical/relational/assignment) operators, and the functions `exp()`, `sum()`, `log()`, and `length()`. Do not use `mean()`. Use the vector `LH` below in R to answer the following questions. This vector contains annual measures of the level (in feet) of Lake Huron, USA.
+
+**You should store your results in appropriately named variables.**
+
+```{r}
+LH <- as.vector(LakeHuron)
+LH
+```
+
+**4(a)** Calculate the arithmetic mean of the vector `LH`.
+
+```{r}
+ari_mean <- sum(LH) / length(LH)
+ari_mean
+```
+
+**4(b)** Calculate the geometric mean of vector `LH`.
+
+```{r}
+geo_mean <- exp(sum(log(LH)) / length(LH))
+geo_mean
+```
+
+**4(c)** Calculate the harmonic mean of the vector `LH`.
+
+```{r}
+har_mean <- length(LH) / sum(1 / LH)
+har_mean
+```
+
+**4(d)** Store the geometric mean, harmonic mean, and arithmetic mean of the of the vector `LH` in a vector called `LH_averages`.
+
+```{r}
+LH_averages <- c(ari_mean, geo_mean, har_mean)
+LH_averages
+```
+
+**4(e)** Name each element in the vector `LH_averages` to clearly indicate which statistic is which.
+
+```{r}
+names(LH_averages) <- c("Arithmetic", "Geometric", "Harmonic")
+LH_averages
+
+```
+
+**4(f)** Use a one line command to check that arithmetic mean is larger than the geometric mean AND that the geometric mean is larger than the harmonic mean.
+
+```{r}
+ari_mean > geo_mean & geo_mean > har_mean
+```
+
+## Exercise 5: Measures of Spread
+
+For these questions use only (arithmetic/logical/relational/assignment) operators, and the functions `exp()`, `sum()`, `log()`, `abs()`, `length()`. Do not use `mean()` or `var()`. Use the vector `LH` from above to answer the following questions.
+
+**You should store your results in appropriately named variables.**
+
+```{r}
+LH <- as.vector(LakeHuron)
+LH_mean <- sum(LH) / length(LH) 
+dev_mean <- sum(abs(LH - LH_mean)) / length(LH)
+print("dev_mean")
+dev_mean
+
+var1 = sum(((LH - LH_mean)) ^ 2) / (length(LH) - 1)
+print("var1")
+var1
+  
+var2 = ((sum(LH ^ 2)) - (sum(LH) ^ 2) / length(LH)) / (length(LH) - 1)
+print("var2")
+var2
+
+co_var = sqrt(var1) / LH_mean * 100
+print("co_var:")
+co_var
+
+LH_dispersion <- c(dev_mean, var1, co_var)
+LH_dispersion <- setNames(LH_dispersion, c("mean deviation", "variance", "coefficient of variation"))
+LH_dispersion
+
+var_equal <- var1 == var2
+var_equal
+```
+
+**5(a)** Calculate the mean deviation of the vector `LH`.
+
+Mean Deviation: 1.058684
+
+**5(b)** There are two formulas for computing the sample variance, $s^{2}$, given below. $$s^2 = \frac{\sum_{i=1}^n (x_i - \overline{x})^2}{n-1} = \frac{\sum_{i=1}^n x_i^2 - \left ( \left ( \sum_{i=}^n x_i\right )^2/n\right ) }{n-1} $$
+
+**Use the one on the left hand side** to calculate the variance of vector `LH`, call this `var1`.
+
+**5(c)** **Use the variance formula on the right hand side** to calculate the variance of vector `LH`, call this `var2`.
+
+var1 = 1.737911
+
+var2 = 1.737911
+
+**5(d)** Calculate the coefficient of variation.
+
+Coefficient of variation: 0.2276838
+
+**5(e)** Store the mean deviation, variance, and coefficient of variation of the vector `LH` in a vector called `LH_dispersion`.
+
+**5(f)** Name each element in the vector `LH_dispersion` to clearly indicate which statistic is which.
+
+**5(g)** Use an operator or function to check if `var1` and `var2` are equivalent.
+
+False
+
+**5(h)** The two formulas for variance are identical mathematically. Discuss why the two objects `var1` and `var2` in **5(g)** might not have been equal.
+
+Because the formulas are executed in different orders, rounding error that may occur may result in a accumulation of small differences causing the two numbers to not be considered equal

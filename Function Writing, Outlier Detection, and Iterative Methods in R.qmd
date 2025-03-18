@@ -1,0 +1,579 @@
+---
+title: "Function Writing, Outlier Detection, and Iterative Methods in R"
+author: "Lance Santana"
+date: "10/31/2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    code-line-numbers: true
+  pdf:
+    code-line-numbers: true
+    fontsize: 10pt
+---
+
+# Instructions
+
+-   This set of exercises contains 3 questions total.
+-   Unless otherwise stated, you may only use functions from Base R to complete the exercises. Email Dr. Landeros (`alandero@ucr.edu`) if you have any doubts, using "\[STAT 107\]" in the subject line.
+-   Check the main Canvas page for updates.
+-   Part of these exercises uses the `Pokemon.csv` dataset we worked with last week. **Note: You do not have to download it from Kaggle! Download it from Canvas.**
+
+## RStudio & Quarto tips
+
+RStudio will automatically stop rendering if your code throws an error. You should refer to the output in RStudio to figure out how to fix the error.
+
+However, sometimes we want to preview our work in the Quarto document to make sure what we see in the console matches the document. In these cases you might consider the following two code chunk options:
+
+The `#| error: true` option to the code chunk continues rendering even if your code throws an error. For example:
+
+```{{r}}
+#| error: true
+x + y + z
+```
+
+The `#| eval: false` prevents RStudio from executing a code chunk during rendering.
+
+```{{r}}
+#| eval: false
+stop("This normally throws an error")
+```
+
+## Making effective use of interactive features
+
+RStudio allows you to run chunks of code in any order, at any time. This is especially useful in checking that functions you write are working as intended. The same interactive features can sometimes cause issues. Keep the following tips in mind:
+
+1.  *Rendering* your work starts from a fresh session and executes code from top to bottom.
+2.  *Test your functions* on easy cases as you work. Don't try and solve everything in one step.
+3.  *Only change one part of your code at a time*, especially in your functions. Each time you run your code you should have an idea of what to expect based on your change. This will help you interpret and understand any errors that occur.
+4.  If you edit a function, *make sure you re-run the code chunk where you define it*. Otherwise, the change does not take effect in the interactive environment.
+
+# Exercise 1: Writing your own functions
+
+**1(a)** Create a function that calculates and returns the *harmonic mean* for any numeric vector. Call it `harm.mean()`.
+
+**Your function**
+
+```{r}
+#
+harm.mean <- function(x) {
+  n <- length(x)
+  return(n / sum(1/x))
+}
+```
+
+**Test it here**
+
+```{r}
+#| error: true
+#| eval: true
+#
+x <- c(1, 2, 3, 4)
+harm.mean(x)
+```
+
+**1(b)** Create a function that calculates and returns the *sample median* for any numeric vector. Call it `my.median()`. This function should only have one argument, a vector containing the values you wish to find the median of. **DO NOT USE the `median()` or `quantile()` functions in this exercise**.
+
+::: callout-tip
+## Hint
+
+The correct formula for the median depends on the number of elements in the data.
+:::
+
+**Your function**
+
+```{r}
+#
+my.median <- function(x) {
+  n <- length(x)
+  ordered_x <- sort(x)
+  if (n %% 2 == 0){
+    m <- (ordered_x[n / 2] + ordered_x[n / 2 + 1]) / 2
+    }
+  else{
+    m <- ordered_x[(n + 1) / 2]
+    }    
+  return(m)
+  }
+
+```
+
+**Test it here**
+
+```{r}
+#| eval: true
+#
+x <- c(1, 2, 3, 4, 5)
+my.median(x)
+```
+
+**1(c)** Use the `harm.mean()` and `my.median()` functions you created in 1(a) and 1(b), and the built-in `mean()` function to calculate the harmonic mean, median, and mean of the `Total` variable in the `Pokemon.csv` dataset. Store the results of these functions in a *named* vector and display the it.
+
+```{r}
+#
+pokemon_data <- read.csv("Pokemon.csv")
+t_values <- pokemon_data$Total
+P_hmean <- harm.mean(t_values)
+P_median <- my.median(t_values)
+P_mean <- mean(t_values)
+
+data_analysis_vector <- c(Harmonic_Mean = P_hmean, Median = P_median, Mean = P_mean)
+print(data_analysis_vector)
+```
+
+**1(d)** Using the Pokemon characters with `Type1` equal to `Poison`, determine the harmonic mean and median of the `Attack` variable by using the functions you created in 1(a) and 1(b).
+
+```{r}
+#
+poison_Pokemon <- subset(pokemon_data, Type1 == "Poison")
+poison_Attack <- poison_Pokemon$Attack
+
+attack_Hmean <- harm.mean(poison_Attack)
+attack_Median <- my.median(poison_Attack)
+
+attack_Stats <- c(Harmonic_Mean = attack_Hmean, Median = attack_Median)
+print(attack_Stats)
+```
+
+**1(e)** Look at your results in 1(c) and 1(d). **Do you think there are outliers influencing the statistics you computed?** Write a sentence or two to explain your answer.
+
+As the harmonic mean is more sensitive to outliers and the median is resilient to outliers, the difference between the two statistics shows the potential for low outliers that bring down the value of the harmonic while leaving the median unaffected. After looking at the data directly it reaffirms this conclusion with several entries that are weighted low at 35 and 40 potentially skewing the data.
+
+::: callout-tip
+## Hint
+
+Some ideas to consider
+
+-   Are any of the statistics you computed supposed to be robust to outliers?
+-   Are there any situations or probability distributions in which we expect the mean and median to match?
+-   How *would* outliers influence the statistics you computed? Consider a vector with 999 `1`s and a single (1) `1000`. You can create such a vector in R with `c(rep(1, 999), 1000)`. What if you reversed the roles of `1` and `10001`?
+:::
+
+# Exercise 2: Detecting outliers
+
+These exercises use concepts and formulas described in the Homework 3 supplement posted on Canvas (outlier detection). **Use the formulas as defined in the document**.
+
+::: callout-tip
+## Hint
+
+Each outlier detection method relies on computing
+
+-   a *lower bound*, which is used to exclude values below the threshold, and
+-   an *upper bound*, which is used to exclude values above the threshold.
+:::
+
+**2(a)** Create a function that identifies possible outliers by using the **IQR method**.
+
+-   This function should have one input, an arbitrary numeric vector.
+-   It should return a vector of all the outliers, that is, a subset of the inputted vector.
+-   If there are no identified outliers, return `NA`.
+
+::: callout-tip
+## Hint
+
+You may use the `quantile()` function in your solution.
+:::
+
+**Your function**
+
+```{r}
+#
+iqr_method <- function(x){
+  q_first <- quantile(x, .25)
+  q_third <- quantile(x, .75)
+  iqr <- q_third - q_first
+  lower_bound <- q_first - 1.5 * iqr
+  upper_bound <- q_third + 1.5 * iqr
+ 
+  outliers_IQR <- x[x < lower_bound | x > upper_bound]
+  
+  if (length(outliers_IQR) == 0){
+    return(NA)
+  }
+  else{
+    return(outliers_IQR)
+  }
+}
+  
+```
+
+**Test it here**
+
+```{r}
+#| eval: true
+# Simulate data from standard normal distribution.
+# Expect NA with high probability.
+iqr_method(rnorm(3, mean = 0, sd = 1))
+# Expect 1000 as an outlier.
+iqr_method(c(1000, rnorm(3, mean = 0, sd = 1)))
+```
+
+**2(b)** Create a function that identifies possible outliers by using the **Z-Score method**.
+
+-   This function should have one input, an arbitrary numeric vector.
+-   It should return a vector of all the outliers, that is, a subset of the inputted vector.
+-   If there are no identified outliers, return `NA`.
+
+**Your function**
+
+```{r}
+#
+zscore_method <- function(x){
+  z_mean <- mean(x)
+  z_sd <- sd(x)
+  z_scores <- (x - z_mean) / (z_sd)
+  
+  outliers_zscore <- x[abs(z_scores) > 3]
+  
+  if (length(outliers_zscore) == 0){
+    return(NA)
+  }
+  else{
+    return(outliers_zscore)
+  }
+}
+```
+
+**Test it here**
+
+```{r}
+#
+zscore_method(rnorm(3, mean = 0, sd = 1))
+zscore_method(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,1000))
+```
+
+**2(c)** Create a function that identifies possible outliers by using the **Chebyschev method**.
+
+-   This function should have one input, an arbitrary numeric vector.
+-   It should return a vector of all the outliers, that is, a subset of the inputted vector.
+-   If there are no identified outliers, return `NA`.
+
+**Your function**
+
+```{r}
+#
+chebyschev_method <- function(x){
+  k <- 3
+  c_mean <- mean(x)
+  c_sd <- sd(x)
+  
+  upper_bound <- c_mean + k * c_sd
+  lower_bound <- c_mean - k * c_sd
+  
+  chebyschev_outlires <- x[x > upper_bound | x < lower_bound]
+  
+  if (length(chebyschev_outlires) == 0){
+    return(NA)
+  }
+  else{
+    return(chebyschev_outlires)
+  }
+}
+
+```
+
+**Test it here**
+
+```{r}
+#
+chebyschev_method(rnorm(3, mean = 0, sd = 1))
+chebyschev_method(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,1000))
+```
+
+**2(d)** Create a function that identifies possible outliers using the IQR, Z-score, and Chebyschev methods using the functions you created in questions (2a), (2b), (2c).
+
+-   This function should return a *named list* where each element of the list contains the outliers for each method.
+-   The names of this list should indicate which method was used.
+
+**Your function**
+
+```{r}
+#
+all_methods <- function(x){
+  outliers <- list("IQR_Outliers" = iqr_method(x), "Z-Score_Outliers" = zscore_method(x), "Chebyschev_Outliers" = chebyschev_method(x))
+  return(outliers)
+}
+```
+
+**Test it here**
+
+```{r}
+#
+all_methods(rnorm(3, mean = 0, sd = 1))
+all_methods(c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,1000))
+```
+
+**2(e)** Use the function created in question (2d) for the `Speed` variable in the `Pokemon.csv` dataset.
+
+```{r}
+#
+p_speed <- pokemon_data$Speed
+all_methods(p_speed )
+```
+
+# Exercise 3: Handling outliers
+
+These exercises use concepts and formulas described in the Homework 3 supplement posted on Canvas (trimmed mean). **Use the formulas as defined in the document**.
+
+**3(a)** Run the code below to create a numeric vector `x` with 1000 data points and visualize it as a scatter plot.
+
+1.  What do you think is the mean of the distribution? (Give a number)
+
+    -.025 the mean will likely be a bit higher than the median because the curve starts off moderate and picks up slightly passed 500 index
+
+2.  What do you think is the median of the distribution? (Give a number)
+
+    -.03 the index of 500 is halfway through the data set making a reasonable median
+
+3.  Do you think there is a *small* or *large* amount of variation?
+
+    High amount of variation, there is a wide spread of data in the graph with the data being evenly distributed
+
+4.  Does the data take positive values, negative values, or both?
+
+    There are both positive and negative values as there are points above and below the 0 marker
+
+5.  Are there any outliers?
+
+    It's difficult\[p to say but if there are it would be the values around 470 on the low end and 530 on the high end.
+
+Give a *very* brief explanation in each part.
+
+```{r}
+#| fig-align: center
+# Do not modify this code chunk!
+set.seed(1789)
+x <- rcauchy(1000, location = 0, scale = 0.5)
+plot(x, ylab = "Data Values", main = "Unsorted")
+plot(sort(x), ylab = "Data Values", main = "Sorted")
+zoom_idx <- 471:530
+plot(zoom_idx, sort(x)[zoom_idx],
+     xlab = "Index",
+     ylab = "Data Values",
+     main = "Zoom near index 500 (sorted)"
+)
+```
+
+**Your response**
+
+**3(b)** Compute the following statistics:
+
+-   arithmetic mean (e.g. `mean()`),
+-   harmonic mean,
+-   median (e.g. `median()`),
+-   mean (absolute) deviation (e.g. `mad()` with `center = mean(x)`), and
+-   standard deviation (e.g. `sd()`).
+
+You can write your own functions, simply compute the quantity with other built-in functions, or use the built-in functions referenced above. Put these quantities in a vector named `sample_stats` with names of your choosing *and display it*.
+
+```{r}
+#
+data_amean <- mean(x)
+data_hmean <- 1/(mean(1 / x))
+data_median <- median(x)
+data_abs_mean <- mad(x, center = mean(x))
+data_sd <- sd(x)
+sample_stats <- c("arithmetic_mean" = data_amean, "harmonic_mean" = data_hmean, "median" = data_median, "mean_deviation" = data_abs_mean, "standard_deviation" = data_sd)
+sample_stats
+```
+
+**3(c)** The function `quantile()` can be used to compute *sample quantiles* in data. Use the `quantile()` function to trim the data `x` by dropping the bottom 10% and top 10%. Name the new data vector `x_trimmed`. Use `plot(x_trimmed)` to display the data. How many values were preserved?
+
+800 values were preserved and 200 were trimmed off
+
+::: callout-tip
+## Hint
+
+Use `quantile()` to compute a lower and upper bound, then use these values to filter the data. Preserve values $x_{i}$ such that $L \le x_{i} < U$.
+:::
+
+```{r}
+#
+lower <- quantile(x, .1)
+upper <- quantile(x, .9)
+x_trimmed <- x[x >= lower & x <= upper]
+plot(x_trimmed)
+
+
+#below is extra code to make the graph similar to the one in the pratice problem above
+x_trimmed_sort <- sort(x_trimmed)
+zoom_idx <- 471:530
+plot(zoom_idx, sort(x_trimmed_sort)[zoom_idx], ylab = "Data Values", xlab = "Index", main = "Trimmed Data")
+#below is code to see how many values were preserved
+length(x_trimmed)
+```
+
+**3(d)** Similar to 3(b), compute the
+
+-   arithmetic mean (e.g. `mean()`),
+-   harmonic mean,
+-   median (e.g. `median()`),
+-   mean (absolute) deviation (e.g. `mad()` with `center = mean(x)`), and
+-   standard deviation (e.g. `sd()`).
+
+of the trimmed data from part 3(c), `x_trimmed`. Put these in a vector `trimmed_stats` with the same names as before.
+
+```{r}
+#
+data_amean <- mean(x_trimmed)
+data_hmean <- 1/(mean(1 / x_trimmed))
+data_median <- median(x_trimmed)
+data_abs_mean <- mad(x_trimmed, center = mean(x_trimmed))
+data_sd <- sd(x_trimmed)
+trimmed_stats <- c("arithmetic_mean" = data_amean, "harmonic_mean" = data_hmean, "median" = data_median, "mean_deviation" = data_abs_mean, "standard_deviation" = data_sd)
+trimmed_stats
+```
+
+**3(e)** Compare your answers in 3(b) and 3(d) answer the following questions.
+
+1.  Which statistics changed?
+
+2.  Did any statistic remain exactly or approximately the same?
+
+3.  Do you think the trimmed statistics are improvements over the original ones in 3(b)? Explain your reasoning.
+
+*Your responses:*
+
+1.  The arithmetic mean changed considerably along with the mean deviation and standard deviation. The harmonic mean changed slightly with the median staying the most constant of the data stats.
+2.  The median stays the closest to being the approximately the same
+3.  Yes the standard deviation is considerably lower with the mean deviation being lower aswell resulting in a more consistent data set with less variation
+
+**3(f)** Now look up the [Cauchy distribution](https://en.wikipedia.org/wiki/Cauchy_distribution) on Wikipedia, which is the distribution used to simulate our data `x` with location $x_{0} = 0$ and scale $\gamma = 0.5$. Look at the information in the box on the right and search for the mean, median, variance, and mean absolute deviation (MAD).
+
+Are you surprised, and does this new information change your thinking on the previous questions? Why?
+
+*I am surprised I was not expecting the mean, median, mode, varience etc. to be balanced at undefined and at 0. Since trimming the data effects the data we should rely on the median and mean absolute distribution considering they are the values that are defined within the Caunchy distribution.*
+
+# Exercise 4: Practice using control flow
+
+**4(a)** Write a function called `zoink_narf` that takes an input `n`. Your function should iterate over the numbers `1` through `n` and `print()` a message based on the following rules:
+
+-   If the current number is divisible by 3, print `"zoink"`.
+-   If the current number is divisible by 5, print `"narf"`.
+-   If the current number is divisible by 3 and 5, print `"zoinknarf"`.
+-   If none of the other rules applied, then just print the number.
+
+Your function should return nothing; i.e. `return()`. Test your function with `n = 30`.
+
+::: callout-tip
+## Hint
+
+The order in which you check the rules matters! The expected messages for `n = 15` is:
+
+```         
+MESSAGE: 1  2 zoink 4 narf zoink  7  8 zoink narf  11  zoink  13  14 zoinknarf
+NUMBER:  1  2   3   4   5     6   7  8   9    10   11    12   13  14    15
+```
+
+The example output above is formatted to compactly present what you should see. Your own implementation may print the messages on different lines, so don't worry about matching exactly.
+:::
+
+**Your function**
+
+```{r}
+#
+zoink_narf <- function(n){
+  for(x in 1:n){
+    if (x %% 3 && x %% 5 == 0){
+      print("zoinknarf")
+    } 
+    else if (x %% 3 == 0){
+      print("narf")
+    }
+    else if (x %% 5 == 0){
+      print("zoink")
+    }
+    else{
+      print(x)
+    }
+  }
+  return()
+}
+```
+
+**Test it here**
+
+```{r}
+#
+zoink_narf(20)
+```
+
+**4(b)** The Fibonacci sequence $F_{n}$ is formed by *starting with the numbers* $0$, $1$ and then adding the last two numbers to get the next number: $0, 1, 1, 2, 3, 5, 8$, etc. Using LaTeX, write out the formula to get the $n$-th Fibonacci number given the previous two numbers in the sequence.
+
+::: callout-tip
+## Hint
+
+You can start an equation with `$$` and end it with another `$$`, which is displayed on a separate line. Subscripts are denoted with `_` and you can use curly braces `{}` to write out complex subscripts. For example, `x_{n+2}` becomes $x_{n+2}$.
+:::
+
+**Your LaTeX code**:
+
+$$
+F_{n} = F_{n-1}+F_{n-2}
+$$
+
+**4(c)** Write a function that computes the first $n$ Fibonacci numbers. Your function should accept a single argument, named `n`, and return the first $n$ Fibonacci numbers in a vector. Test your function using `n=10` and `n=15`.
+
+::: callout-tip
+## Hint
+
+First decide how you want to initialize the output your function must return. Then you can write your solution in a way that updates that output.
+:::
+
+**Your function**
+
+```{r}
+#
+fibonacci <-function(n){
+  fib <- numeric(n)
+  fib[1] <- 0
+  fib[2] <- 1
+   
+  for (i in 3:length(fib)){
+    fib[i] <- fib[i - 1] + fib[i - 2]
+  }
+  return(fib)
+}
+
+```
+
+**Test it here**
+
+```{r}
+#
+fibonacci(10)
+fibonacci(15)
+```
+
+**4(d)** Recall that a factorial of a number is product of all whole numbers from our chosen number down to 1. For example, 4! (4 factorial) = 4(3)(2)(1) = 24. Write out the factorial formula for `n!` in LaTeX, using `\times` to denote multiplication and `\ldots` to imply a repeated operation.
+
+**Example**: Look at the LaTeX for $\sum_{i=1}^{n} x_{i} = x_{1} + x_{2} + \ldots x_{n}$.
+
+**Your LaTeX code**:
+
+$$
+n! = n \times(n-1) + (n-2) + (n-3)\ldots
+$$
+
+**4(e)** Create a function which has one integer argument, `n`, and have this function generate the factorial of this number using a `for` loop. Do not use `factorial()` or `prod()` in your function. Test your function using `n=5` and `n=7`. **You may assume that the input `n` is in fact an integer**.
+
+**Your function**
+
+```{r}
+#
+factorial_f <- function(n){
+  for(i in (n-1):1){
+    n = i * n
+  }
+  return(n)
+}
+```
+
+**Test it here**
+
+```{r}
+#
+factorial_f(5)
+factorial_f(7)
+```

@@ -1,0 +1,275 @@
+---
+title: "Data Structures, Manipulation, and Analysis"
+author: "Lance Santana"
+date: "10-16-2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    code-line-numbers: true
+  pdf:
+    code-line-numbers: true
+error: true
+---
+
+# Instructions
+
+-   This set of exercises contains 5 questions total.
+-   Unless otherwise stated, you may only use functions from Base R to complete the exercises. Email Dr. Landeros (`alandero@ucr.edu`) if you have any doubts, using "\[STAT 107\]" in the subject line.
+-   Check the main Canvas page for updates.
+
+# Exercise 1: Factors
+
+Use the data frame `mtcars`, which is a built in data set in R, to answer the questions below. Display the final objects created/adjusted for each question. You can reference it with `help("mtcars")` to verify that it is available on your computer.
+
+**1(a)** Create a factor vector called `vs` from the `vs` column of `mtcars`. Make sure it has two levels: 0, 1.
+
+```{r}
+vs <- factor(mtcars$vs, levels = c(0, 1))
+vs
+mtcars$vs
+```
+
+**1(b)** Create a factor vector called `carb` from the `carb` column of `mtcars`. Have this be an ordered factor with levels: 1 \< 2 \< 3 \< 4 \< 5 \< 6 \< 7 \< 8. HINT: Some of these levels do not appear automatically.
+
+```{r}
+carb <- factor(mtcars$carb, levels = 1 : 8, ordered = TRUE)
+carb
+```
+
+**1(c)** Create a frequency table for the column `mpg`.
+
+```{r}
+mpg_table <- table(mtcars$mpg)
+mpg_table
+```
+
+**1(d)** Create a two way frequency table for the factor vectors `vs` and `carb`.
+
+```{r}
+vs_carb_table <- table(vs, carb)
+vs_carb_table
+```
+
+**1(e)** Redefine the vectors `vs` and `carb` to be character vectors.
+
+```{r}
+vs_c <- as.character(vs)
+carb_c <- as.character(carb)
+```
+
+**1(f)** Create a **two-way frequency table** for `vs` and `carb` again.
+
+```{r}
+vs_carb_table_c <- table(vs_c, carb_c)
+vs_carb_table_c
+```
+
+**1(g)** Comment on the difference between the frequency table in 1d and 1f.
+
+*The frequency table that is made of factor vectors is able to store all the values even where ones don't exist as 0s. The character vector does not include values that don't exist and therefore do not have columns for 5 and 7 as there are no values for these.*
+
+**1(h)** Display everything inside the vector `carb` except the second to last element.
+
+```{r}
+carb[-(length(carb)-1)]
+```
+
+# Exercise 2: Lists and Indexing
+
+This problem uses the `mtcars` dataset from Exercise 1.
+
+**2(a)** Create a list with the following elements, in order:
+
+| Number | Name         | Description                                   |
+|--------|--------------|-----------------------------------------------|
+| 1      | `n`          | The number of rows in `mtcars`                |
+| 2      | `cyl_levels` | The *unique* values in the `cyl` column.      |
+| 3      | `hp_range`   | The `range()` for the horsepower column `hp`. |
+| 4      | `mpg_var`    | The variance of the `mpg` column.             |
+
+Use the `str()` command to display the structure of the list.
+
+```{r}
+mtcars_list <- list(
+  n = nrow(mtcars),
+  cyl_levels = unique(mtcars$cyl),
+  hp_range = range(mtcars$hp),
+  mpg_var = var(mtcars$mpg)
+)
+```
+
+**2(b)** Name the elements of the list (4 names) (if you have not done so already). Use the `str()` command to display the structure of the list.
+
+```{r}
+names(mtcars_list) <- c("n", "cyl_levels", "hp_range", "mpg_var")
+str(mtcars_list)
+```
+
+**2(c)** Access and display the second element of the list **using its index number**.
+
+```{r}
+mtcars_list[[2]]
+```
+
+**2(d)** Access and display the second element of the list **using its name**.
+
+```{r}
+mtcars_list[["cyl_levels"]]
+```
+
+**2(e)** **Using your list**, access and display the *maximum* value of the `hp` column.
+
+```{r}
+hp_max <- max(mtcars_list$hp_range)
+hp_min <- min(mtcars$hp)
+hp_max
+hp_min
+```
+
+# Exercise 3: Matrices and Data Frames
+
+**3(a)** Create the a numeric matrix called `mymat` that contains 0.1, 2, 4 in the first column, 7, 3, 100 in the second column, and 1, 0.9, 8, in the third column. Type the name of the variable `mymat` so that it is displayed.
+
+```{r}
+mymat <- matrix(c(0.1, 2, 4, 7, 3, 100, 1, 0.9, 8), nrow = 3, byrow = TRUE)
+mymat
+```
+
+**3(b)** Display the first row of the matrix.
+
+```{r}
+mrow_1 <- mymat[1,]
+mrow_1
+```
+
+**3(c)** Use operators to generate and display a matrix of TRUE/FALSE values, where TRUE means the values in `mymat` are strictly greater than 1 AND less than or equal to `pi`.
+
+```{r}
+b_matrix <- mymat > 1 & mymat <= pi
+b_matrix
+```
+
+**3(d)** Display the element in the second row and third column.
+
+```{r}
+matrix_2nd_3rd <- mymat[2,3]
+matrix_2nd_3rd
+```
+
+**3(e)** Multiply the second column of the matrix by 10.
+
+```{r}
+matrix_3c_10 <- mymat[,2] * 10
+matrix_3c_10
+```
+
+**3(f)** Use the function `data.frame()` to create a data frame object called `mydata` using the following sets of data for each column (3 rows, 4 columns). The column names (in order) should be: age, height, gender, and smoker. Make the class of each column the following (in order): numeric, numeric, factor, logical.
+
+-   22, 25, 28
+
+-   66, 71, 64
+
+-   F, M, F
+
+-   FALSE, TRUE, TRUE
+
+```{r}
+mydata <- data.frame(
+  age = c(22, 25, 28),
+  height = c(66, 71, 64),
+  gender = factor(c("F", "M", "F")),
+  smoker = c(FALSE, TRUE, TRUE)
+)
+mydata
+```
+
+**3(g)** Change the row names of the data frame in 4f to be three names of your choice.
+
+```{r}
+rownames(mydata) <- c("Loki", "Indie", "Simba")
+mydata
+```
+
+**3(h)** Discuss *two* differences between a matrix and a data frame.
+
+A matrix contains one data type while a data frame can contain multiple types of data. The second difference is with naming as row and column names are easier to set up and part of the data frame set up while matrixs do not rely on naming and use numeric expressions when names are not.
+
+# Exercise 4: Indexing with Pokemon
+
+**4(a)** Download the data set `Pokemon.csv` from Canvas. This data set comes from [Kaggle.com](https://www.kaggle.com/abcsds/pokemon). Display the first 15 lines of this data set.
+
+```{r}
+install.packages("readr")
+library(readr)
+pokemon_data <- read_csv("Pokemon.csv")
+head(pokemon_data, 15)
+```
+
+**4(b)** Use commands in R to determine many Pokemon that have both `HP>100` and `Defense>100`.
+
+```{r}
+good_pokemon <- sum(pokemon_data$HP > 100 & pokemon_data$Defense >100)
+good_pokemon
+```
+
+**4(c)** Display 37th smallest value in the `HP` column using R commands.
+
+```{r}
+smallest_HP_37th <- sort(pokemon_data$HP)[37]
+smallest_HP_37th
+```
+
+**4(d)** Create a new factor column in the Pokemon data set called `Mentality`. If the difference between the variable `Attack` is larger than the variable `Defense`, assign this character's `Mentality = Aggressive`. If `Attack` is smaller than `Defense` then assign `Mentality = Protective`. If they are equal assign `Mentality = Balanced`. Display the first 15 rows of the Pokemon data set with this new variable.
+
+::: callout-tip
+## Hint
+
+First create a new column, then figure out how to retrieve desired information.
+:::
+
+```{r}
+pokemon_data$Mentality <- factor(
+  ifelse(pokemon_data$Attack > pokemon_data$Defense, "Aggressive",
+  ifelse(pokemon_data$Attack < pokemon_data$Defense, "Protective",
+  "Balanced"))
+)  
+  
+head(pokemon_data, 15)
+```
+
+# Exercise 5: Data Manipulation with Pokemon
+
+**5(a)** Create a new data set called `Pokemon2` which only contains the columns: `Name`, `Total`, `HP`, `Attack`,`Defense`, `Sp. Atk`, `Sp. Def`. Use the `head()` function to display the first few lines of this new data set.
+
+```{r}
+Pokemon2 <- pokemon_data[, c("Name", "Total", "HP", "Attack", "Defense", "Sp. Atk", "Sp. Def")]
+head(Pokemon2)
+```
+
+**5(b)** Create a new data set called `Pokemon3` which only contains the legendary Pokemon that have `Total` greater than the average (arithmetic mean) `Total` value. In addition, only have this data set only contain the columns: `Name`, `Type 1`, `Total`, `Speed`, `Generation`. Display **only** the first 10 rows of this new data set.
+
+```{r}
+average_total <- mean(pokemon_data$Total)
+
+Pokemon3 <- pokemon_data[pokemon_data$Legendary == TRUE & pokemon_data$Total > average_total, c("Name", "Type1", "Total", "Speed", "Generation")]
+  
+
+head(Pokemon3, 10)
+```
+
+**5(c)** The Pokemon data set contains `NA` values. Create a new data set called `Pokemon4` which only contains complete cases. That is, this data set only contains the rows which have no `NA` values. Display the first 10 rows of this new data set.
+
+```{r}
+Pokemon4 <- na.omit(pokemon_data)
+
+head(Pokemon4, 10)
+```
+
+**5(d)** Determine the Pokemon characters have the top 10 largest values in the `Total` column. Display *only the names* of these Pokemon.
+
+```{r}
+Pokemon5 <- pokemon_data[order(-pokemon_data$Total),][1:10, "Name"]
+Pokemon5
+```

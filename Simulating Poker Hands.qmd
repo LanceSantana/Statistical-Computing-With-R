@@ -1,0 +1,117 @@
+---
+title: "Simulating Poker Hands"
+author: "Lance Santana"
+date: "11-15-2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-line-numbers: true
+    embed-resources: true
+  pdf:
+    code-line-numbers: true
+    embed-resources: true
+error: true
+---
+
+# Packages
+
+```{r}
+library(tidyverse)
+```
+
+Below we have code implementing a standard 52-card deck. These decks are used to play a game called poker. In poker, five cards are drawn and players bet on whether their collection of five cards is the most rare. The five card collections have different names: royal flush, straight flush, four of a kind, full house, flush, straight, three of a kind, two pair, pair. These five card collections are called hands. Wikipedia has a list and explanation of [standard poker hands](https://en.wikipedia.org/wiki/List_of_poker_hands#Hand-ranking_categories).
+
+
+```{r}
+suit <- rep(c("Heart", "Diamond", "Spade", "Club"), each = 13)
+color <- rep(c("Red", "Black"), each = 26)
+value <- rep(c(2:10, "Jack", "Queen", "King", "Ace"), times = 4)
+card_deck <- tibble(suit, color, value)
+head(card_deck, 13)
+```
+
+# Part (a)
+
+ Create a function that samples 5 cards, without replacement, from a 52-card deck and returns it as a `tibble`. Call the function `sample_hand`.
+
+  - You may assume the deck has the same structure as the `card_deck` created above.
+  - The only argument needed to your function is a `deck`. Trust us on this.
+
+Set the RNG seed to `107` and call your function on our deck, `card_deck`.
+
+
+```{r}
+# your code goes here
+sample_deck = function(deck){
+  random_index <- sample(1:nrow(deck),size = 5, replace = FALSE)
+  return(deck[random_index,])
+
+}
+set.seed(107)
+print(sample_deck(card_deck))
+```
+
+# Part (b)
+
+Create a function that checks if a collection of five cards is "Four of a Kind". That is, four of the five inputted cards drawn have the same value. If so, return `TRUE`, otherwise return `FALSE`.
+
+::: callout-tip
+## Hint
+
+The "Four of a Kind" condition only involves card **values**.
+:::
+
+```{r}
+# your code
+is_four_of_a_kind = function(hand){
+  card_count = table(hand$value)
+  return(any(card_count == 4))
+}
+set.seed(107)
+hand1 = sample_deck(card_deck)
+print(is_four_of_a_kind(hand1))
+```
+
+# Part (c)
+
+Create three simulations that sample a 5-card hand `n = 100L`, `n = 1000L`, and `n = 10000L` times.
+
+- *Before each simulation*, set the seed to `62`.
+- *After each simulation*, compute the probability of "Found of a Kind".
+
+```{r}
+# your code
+probability = c()
+for (n in c(100L, 1000L, 10000L)){
+  result = replicate(n, is_four_of_a_kind(sample_deck(card_deck)))
+  probability = c(probability, mean(result))
+}
+probability
+```
+
+# Part (d)
+
+Fix `n = 10000L` and simulate $\hat{p}_n$, your empirical estimate of the probability $\Pr(\text{Four of a Kind})$, `nreps = 20L` times.
+
+- Set the seed to `1903`.
+- Report the *mean* of $\hat{p}_n$.
+- Report the *variance* of $\hat{p}_n$.
+- Visualize the distribution of $\hat{p}_n$.
+- If we were to decrease `nreps` to `10`, how would your graphic for the distribution change? What if we increase `nreps` to `1000`?
+
+
+```{r}
+# your code
+set.seed(1903)
+compute_phat = function(n,dect){
+  result = replicate(n, is_four_of_a_kind(sample_deck(card_deck)))
+  return(mean(result))
+}
+p_hat = replicate(20L, compute_phat(10000, card_deck))
+mean(p_hat)
+var(p_hat)
+hist(p_hat)
+```
+
+When we decrease the number of repetitions to 10 the data is more distributed less focused towards the overall mean / probability. As we increase the sample to 1000 we see that the p_hat is more concentrated meaning that theirs less variance and becoming more precise. 

@@ -1,0 +1,79 @@
+---
+title: "String Manipulation"
+author: "Lance Santana"
+date: "11-08-2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-line-numbers: true
+    embed-resources: true
+  pdf:
+    code-line-numbers: true
+    embed-resources: true
+error: true
+---
+
+This exercise uses the following set of lyrics. Each line is stored as a `character` object. **Do not modify it**.
+
+```{r}
+lyrics <- c(
+  "The monkeys stand for honesty",
+  "Giraffes are insincere",
+  "And the elephants are kindly, but they’re dumb",
+  "Orangutans are skeptical",
+  "Of changes in their cages",
+  "And the zookeeper is very fond of rum",
+  "Zebras are reactionaries",
+  "Antelopes are missionaries",
+  "Pigeons plot in secrecy",
+  "And hamsters turn on frequently",
+  "What a gas!",
+  "You gotta come and see",
+  "At the zoo",
+  "At the zoo"
+)
+```
+
+
+In the *second* line, use a function to **subset** the string starting at position 14 and ending at position 23.
+
+```{r}
+# your code
+library(tidyverse)
+lyrics[2]
+substr(lyrics[2], 14, 23)
+```
+
+Use a function to **split** all the lyrics and extract all the words. Convert the result into a `character` vector (that is, *not* a list object).
+
+```{r}
+# your code
+extracted_vector = str_split(lyrics, pattern = " ")
+chr_vector = unlist(extracted_vector)
+chr_vector
+```
+
+Use a function to **join** the first three lines using a newline symbol. Display the resulting string using `cat()`. *There should be no extra spaces in the result*.
+
+```{r}
+# your code
+cat(paste(lyrics[1:3],collapse = '\n'))
+```
+
+Use a function to **substitute** the word `"rum"` with `"Rum"` in line 6.
+
+```{r}
+# your code
+replaced_string = str_replace(lyrics[6], "rum", "Rum")
+replaced_string
+```
+
+Use a function to **search** for all the lines that contain the sequence `"zoo"`.
+
+```{r}
+# your code
+find_string = str_detect(lyrics, 'zoo')
+search_string = lyrics[find_string]
+search_string
+```

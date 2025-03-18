@@ -1,0 +1,280 @@
+---
+title: "Answering Questions With Data"
+author: "Lance Santana"
+date: "10-11-2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-line-numbers: true
+    embed-resources: true
+  pdf:
+    code-line-numbers: true
+    embed-resources: true
+error: true
+---
+
+# Instructions
+
+These exercises use data on student responses to a survey asking what days and times they would be able to attend office hours.
+
+# Loading data in R
+
+Load the data `OH_responses.csv` using `read.csv()`. Call the object `OH` and display the first 3 rows.
+
+```{r}
+OH <- read.csv("OH_responses.csv")
+
+head(OH, 3)
+```
+
+# Formatting data
+
+Often we need to preprocess data before we start working with it. It is good practice to document exactly how you preprocessed a dataset using a script.
+
+Fortunately, this has been done for you already. **Run the code chunk below** to reformat the data as a new object named `survey`.
+
+Then, create a new code chunk to display the first 5 rows of `survey`.
+
+Hint: This will only work if you called your `data.frame` object in the previous part `OH`.
+
+```{r}
+### DO NOT MODIFY ###
+clean_responses <- function(a_string) {
+  # split a character object `a_string` at the commas `,`
+  items <- unlist(strsplit(a_string, ', '))
+  
+  # create an empty vector and initialize a counter
+  vals <- c()
+  k = 0
+  
+  # for each chunk in the split items...
+  for (i in seq(1, length(items), by = 2)) {
+    # combine the next two items with a `-` and save it in our vector
+    vals[k + 1] <- paste(items[i], "-", items[i+1])
+    
+    # update the counter
+    k <- k + 1
+  }
+  
+  # return the cleaned data
+  return(vals)
+}
+
+reformat_OH_data <- function(your_OH_object) {
+  # rename the columns to something simple
+  colnames(your_OH_object) <- c("timestamp", "responses")
+  
+  # outline format for the new data.frame object
+  new_col_names <- c(
+    "timestamp",
+    "Tues1", "Tues2", "Tues3", "Tues4", "Tues5", "Tues6",
+    "Thur1", "Thur2", "Thur3", "Thur4", "Thur5", "Thur6",
+    "None"
+  )
+  
+  # initialize an empty data.frame object
+  empty_matrix <- matrix(nrow = 0, ncol = length(new_col_names))
+  survey <- data.frame(empty_matrix)
+  colnames(survey) <- new_col_names
+  
+  # list the survey responses
+  options <- c(
+    "Tuesday - 10:00AM - 11:00AM",
+    "Tuesday - 11:00AM - 12:00PM",
+    "Tuesday - 12:00PM - 1:00PM",
+    "Tuesday - 1:00PM - 2:00PM",
+    "Tuesday - 2:00PM - 3:00PM",
+    "Tuesday - 3:00PM - 4:00PM",
+    "Thursday - 10:00AM - 11:00AM",
+    "Thursday - 11:00AM - 12:00PM",
+    "Thursday - 12:00PM - 1:00PM",
+    "Thursday - 1:00PM - 2:00PM",
+    "Thursday - 2:00PM - 3:00PM",
+    "Thursday - 3:00PM - 4:00PM",
+    "None of these times work for me"
+  )
+  
+  for (i in 1:nrow(your_OH_object)) {
+    # get timestamp from row i
+    tstamp <- your_OH_object[["timestamp"]][i]
+    
+    # reformat the student's responses as collected by Google Forms
+    selected_options <- clean_responses(your_OH_object[["responses"]][i])
+    
+    # initialize a list object, this will hold the row data
+    new_row <- list(tstamp)
+    
+    # check which options student i selected
+    for (option in options) {
+      k <- length(new_row)
+      new_row[k+1] <- option %in% selected_options
+    }
+    
+    # add the row to the new data frame
+    survey[i,] <- new_row
+  }
+  return(survey)
+}
+
+survey <- reformat_OH_data(OH)
+### END DO NOT MODIFY ###
+```
+
+```{r}
+head(survey, 5)
+```
+
+# Who can attend?
+
+We'd like to know who can attend on Tuesday during time slot 1, `Tues1`, and Thursday, during time slot 1, `Thur1`.
+
+Using the `survey`, compute the following:
+
+-   `n_tues`, the number of students that can attend **ONLY** the `Tues1` slot,
+
+-   `n_thur`, the number of students that can attend **ONLY** the `Thur1` slot,
+
+-   `n_both`, the number of students that can attend **BOTH** the `Tues1` and `Thur1` slots,
+
+-   `n_neit`, the number of students unable to attend either `Tues1` or `Thur1`.
+
+Put these values in a vector with names `Tuesday`, `Thursday`, `Both`, and `Neither` and display your answer.
+
+::: callout-tip
+## Hint
+
+Each quantity can be computed using only a combination of indexing, logical operations (`&`, `|`, and `!`, `all()`, `any()`), and `sum()`.
+:::
+
+```{r}
+n_tues <- sum(survey$Tues1 == TRUE & survey$Thur1 == FALSE)
+n_thur <- sum(survey$Tues1 == FALSE & survey$Thur1 == TRUE)
+n_both <- sum(survey$Tues1 == TRUE & survey$Thur1 == TRUE)
+n_neit <- sum(survey$Tues1 == FALSE & survey$Thur1 == FALSE)
+
+a <- c(Tuesday = n_tues, Thursday = n_thur, Both = n_both, Neither = n_neit)
+a
+```
+
+# Majority rules
+
+Similar to the previous part, compute the following:
+
+-   `total_tuesday`, the number of students that can *only* attend office hours on *any* Tuesday.
+
+-   `total_thursday`, the number of students that can *only* attend office hours on *any* Thursday.
+
+Put your answers in a vector with names "Only Tuesday" and "Only Thursday", then display the result.
+
+::: callout-tip
+## Hint
+
+First figure out who can attend *any* Tuesday and *any* Thursday. Use those two pieces of information to compute your answers.
+:::
+
+```{r}
+attend_tues <- (survey$Tues1 | survey$Tues2 | survey$Tues3 | survey$Tues4 | survey$Tues5 | survey$Tues6)
+
+attend_thur <- (survey$Thur1 | survey$Thur2 | survey$Thur3 | survey$Thur4 | survey$Thur5 | survey$Thur6)
+
+total_tuesday <- sum(attend_tues & !attend_thur)
+total_thursday <- sum(!attend_tues & attend_thur)
+
+majority <- c("Only Tuesday" = total_tuesday, "Only Thursday" = total_thursday)
+majority
+```
+
+# Which students have the most flexibility?
+
+Make a new column called `Total` which reports how many options each student selected. For example, the first response (row 1) selected 6 slots. To fill in the data, you will write a function that takes in a row and returns the total.
+
+Follow these steps to help you:
+
+1.  Create the column initialized with the value `NA`.
+
+2.  Write a function, called `student_total`, that takes in a *row* of the `survey` data frame. Your function should return a sum of the `logical` columns. \[In R and many other languages, `TRUE` is treated as a `1` and `FALSE` is treated as a `0`\].
+
+3.  Run the code chunk provided below to test your function.
+
+::: callout-tip
+## Hint 1
+
+Your function should be 1 to 5 lines at most. If your answer is longer than that, you're overthinking the problem. Re-read the prompt!
+:::
+
+::: callout-tip
+## Hint 2
+
+The test function gives you hints as to what may be wrong with your solution. Pay attention to the console output!
+:::
+
+**Your Code**
+
+```{r}
+survey$Total = NA
+
+student_total = function(row){
+  n_sum = sum(row[2:13])
+  return(n_sum)
+  
+}
+```
+
+**Run this to test your function**
+
+```{r}
+### DO NOT MODIFY ###
+
+test_student_total <- function(survey) {
+  # sanity check
+  if ( !("Total" %in% colnames(survey)) ){
+    rlang::abort(
+      "The column 'Total' was not found in the data frame. Did you create it?"
+    )
+  }
+  
+  # execute your code to fill in survey$Total
+  for (i in 1:nrow(survey)) {
+    survey$Total[i] <- student_total(survey[i,])
+  }
+  
+  # Test 1: Are there NAs?
+  is_NA <- is.na(survey$Total)
+  if (any(is_NA)) {
+    idx <- which(is_NA)
+    rlang::abort(
+      paste("There are", length(idx), "NAs at rows", toString(idx))
+    )
+  }
+  
+  answers <- c(
+    6, 12, 4, 4, 6,
+    8, 5, 2, 5, 2,
+    2, 8, 6, 2, 4,
+    2, 4, 7, 5, 6,
+    9, 5, 6, 4, 5,
+    1, 8, 2, 4, 4,
+    8, 4
+  )
+  
+  is_correct <- survey$Total == answers
+  if (all(is_correct)) {
+    print("Your function passed the test!")
+  } else {
+    idx <- which(is_correct)
+    rlang::abort(
+      paste("There are ", length(idx), " incorrect answers at rows ", toString(idx))
+    )
+  }
+
+  return(survey)
+}
+
+survey_new <- test_student_total(survey)
+### END DO NOT MODIFY ###
+```
+
+```{r}
+barplot(survey_new$Total, xlab = "Students", ylab = "Availability")
+```

@@ -1,0 +1,139 @@
+---
+title: "Writing Functions"
+author: "Lance Santana"
+date: "10-25-2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-line-numbers: true
+    embed-resources: true
+  pdf:
+    code-line-numbers: true
+    embed-resources: true
+error: true
+---
+
+# Instructions
+
+# Warm-up
+
+Recreate the following output using either a loop or an apply method.
+
+```
+~1~
+~2~2~
+~3~3~3~
+~4~4~4~4~
+~5~5~5~5~5~
+```
+
+::: callout-tip
+## Hint
+Look up the functions `paste()` and  `print()` in the Help files.
+:::
+
+```{r}
+for(i in c(1:5)){
+  pattern = paste(rep(i,i), collapse = "~")
+  print(paste("", pattern, "", sep = "~"))
+}
+
+```
+
+
+# `while()` loops
+
+Create the function which has one argument `n`.  Have this function generate the first n Fibonnaci numbers using a **while** loop.  Note that the Fibonacci sequence is formed by starting with the number 0, 1 and then adding the last two numbers to get the next number: 0, 1, 1, 2, 3, 5, 8, etc.
+
+
+```{r}
+fib = function(n){
+  result = c()
+  i = 0
+  
+  while(i < n){
+    i = i + 1
+    
+    if (i==1){
+      result[i] = 0
+    }
+    else if (i == 2) {
+      result[i] = 1
+    }
+    else{
+      result[i] = result[i-1] + result[i-2]
+    }
+  }
+  return(result)
+  }
+
+```
+
+Call your function from Q2 using `n=8` and `n=30`.
+
+```{r}
+fib(8)
+fib(30)
+```
+
+
+# Combining control flow structures
+
+Create a function that has only one argument, `vec`.  Let `vec` be any arbitrary numeric vector. Use a loop inside your function to add all elements in `vec` that are even together, and return this sum.
+
+```{r}
+even_sum = function(vec){
+  s = 0
+  
+  for (num in vec){
+    if (num %% 2 ==0)
+      s = s + num
+  }
+  return(s)
+}
+```
+
+Call your function from Q3 using the vectors: `62, 13.1, 26.2, 3.2, 5, 2` and `-5.2, -pi, exp(4), 100^(1/2), 1`.
+
+```{r}
+v1 <- c(62, 13.1, 26.2, 3.2, 5, 2)
+v2 <- c(-5.2, -pi, exp(4), 100^(1/2), 1)
+
+even_sum(v1)
+even_sum(v2)
+```
+
+# Implementing `median()`
+
+Create a function that calculates and returns the _sample median_ for any numeric vector. Call it `my.median()`. This function should only have one argument, a vector containing the values you wish to find the median of. **DO NOT USE the `median()` or `quantile()` functions in this exercise**.
+
+::: callout-tip
+## Hint
+The correct formula for the median depends on the number of elements in the data.
+:::
+
+**Your function**
+
+```{r}
+my.median = function(vec){
+  n = length(vec)
+  vec = sort(vec)
+  
+  if (n %% 2 == 1){
+    med = vec[(n + 1) / 2]
+  }
+  else{
+    med = (vec[n/2] + vec[n/2+1]) / 2
+  }
+  return(med)
+}
+```
+
+**Test it here**
+
+```{r}
+my.median(c(1, 2, 3))
+my.median(c(3, 2, 1))
+my.median(c(3, 4, 1, 2))
+```

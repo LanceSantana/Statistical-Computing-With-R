@@ -1,0 +1,274 @@
+---
+title: "Advanced Data Visualization and Analysis with Tidyverse"
+author: "Lance Santana"
+date: "12/5/2024"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    code-line-numbers: true
+  pdf:
+    code-line-numbers: true
+    fontsize: 10pt
+error: true
+---
+
+# Load packages
+
+```{r}
+library(tidyverse)
+```
+
+# Problem 1: Visualizing Housing Data with Tidyverse
+
+This exercise uses the `Housing.csv` dataset from Homework 4. It is posted on Canvas. Load it here.
+
+```{r}
+Housing <- read_csv("/Users/lancesantana/Downloads/Housing (1).csv")
+```
+
+## Part (a)
+Create a boxplot for `price` variable across the different amounts of `bedrooms`.  Change the color palette for your graph. **(1 point)**
+
+::: callout-tip
+### Hint
+Start plotting with the `ggplot()` command, then specify the *geometry* with `geom_boxplot()`.
+:::
+
+```{r}
+# code
+
+bedroom_price_data <- Housing %>%
+  mutate(price = as.numeric(price))
+
+ggplot(bedroom_price_data, aes(x = factor(bedrooms), y = price, fill = factor(bedrooms))) +
+         geom_boxplot() +
+         labs(
+              title = "Price based on Number of Bedrooms", 
+              x = "Amount of Bedrooms",
+              y = "Price",
+              fill = "Bedrooms"
+            ) +
+        scale_fill_brewer(palette = "Set1")
+```
+
+## Part (b)
+
+Create a scatter plot for `area` and `price` for the Housing data set.  Differentiate the points by `prefarea` and `mainroad`. **(1 point)**
+
+::: callout-tip
+### Hint
+
+Check which *aesthetics* are supported by `geom_point()`.
+:::
+
+```{r}
+# code
+area_price_data <- Housing %>% 
+  mutate(
+    price = as.numeric(price),
+    area = as.numeric(area)
+    )
+  
+ggplot(area_price_data, aes(x = price, y = area, color = mainroad, shape = prefarea)) + 
+  geom_point() +
+  labs(
+    title = "Area & Price Scatter Plot",
+    x = "Price",
+    y = "Area",
+    color = "Main Road",
+    shape = "Preffered Area"
+  ) +
+  scale_color_brewer(palette = "Set1")
+  
+```
+
+## Part (c)
+
+Create a bar plot that compares the number of multi-story homes broken down by whether they are in preferred areas or not. Give the plot a title. **(1 point)**
+
+::: callout-tip
+### Hints
+- Use the `fill` aesthetic instead of `color` to make the comparison very clear.
+- Look up `geom_bar()` and `position_dodge()` to understand how to create grouped bar plots.
+:::
+
+```{r}
+# code
+home_prefarea <- Housing %>%
+  filter(stories > 1) %>%
+  group_by(prefarea) %>%
+  summarize(count = n())
+  
+  
+  ggplot(home_prefarea, aes(x = factor(prefarea), y = count, fill = factor(prefarea))) +
+    geom_bar(stat = "identity") +
+    labs(
+      title = "Houses by Prefered Area",
+      x = NULL,
+      y = "Number of Houses",
+      fill = "Prefered Area"
+    )
+
+
+```
+
+## Part (d)
+
+Use `geom_density()` to compare the distribution of `price` for different `furnishingstatus`. Change the colors on this plot to be something other than the default. **(1 point)**
+
+```{r}
+# code
+price_furnishing_data <- Housing
+
+ggplot(price_furnishing_data, aes(x = price, fill = factor(furnishingstatus))) + 
+  geom_density(alpha = .5) + 
+  labs(
+    title = "Price Density by Furnishing Status",
+    x = "Price",
+    y = "Density",
+    fill = "Furnishing Status"
+  ) + 
+  scale_fill_brewer(palette = "Set1")
+
+
+
+```
+
+# Problem 2: Exploring on Your Own
+
+Just as with R or any programming language, playing around with examples is essential to learning and mastering packages. This exercise is intended to encourage some independent exploration of the Tidyverse.
+
+**For this exercise, choose a dataset and create a summary for an interesting relationship using `facet_grid()`. (3 points)**
+
+- You may choose a dataset from Canvas, or look for one on your own. I recommend using the class datasets.
+- Your `facet_grid()` should consider at least one variable.
+- The relationship you plot is up to you, but be sure to choose an appropriate plot type.
+- Label the plot so that it looks professional! Use color if it helps communicate a message.
+- Write 1 or 2 sentences explaining the figure you created.
+- You may also consider more exotic plot types beyond line, scatter, bar, or histogram.
+
+```{r}
+# code
+poke_data <- read_csv("Pokemon.csv")
+ggplot(poke_data, aes(x = Attack, y = Defense, color = Type1, shape = Legendary)) +
+  geom_point() +
+  facet_grid(Generation ~ Legendary) +
+  labs(
+    title = "Attack & Defense on Legendary Status ",
+    x = "Attack",
+    y = "Defense",
+    color = "Type",
+    shape = "Legendary"
+  ) 
+
+#This chart separates Pokemon by into the category of legendary status and generation, color coded by their type. Each scatter plot displays where each Pokemon lies based on attack and defense stats.  
+
+
+```
+
+## Examples
+
+Below are some examples to inspire you.
+
+### `diamonds`: Relationship between number of carats and price in high-quality diamonds
+
+The `facet_grid()` from `ggplot2` can be used to help summarize data across multiple categorical variables.
+Below is one example:
+
+![](https://alanderos91.github.io/BottomlessBag/HW6_diamonds_facet_example.png){fig-align="center" width="80%"}
+
+Conceptually, the "main plot" is a scatter plot of diamond carats versus price, broken down by clarity, similar to the figure in Exercise 1(d). Each subplot corresponds to a particular combination of `cut` and `color`. Thus, the plot summarizes the relationship across 3 variables: `cut`, `color`, and `clarity`. This kind of summary can be useful in both exploratory analyses and in reporting potentially interesting group effects.
+
+The code to generate the plot is given below.
+
+```{r}
+#| eval: false
+#| code-fold: true
+#
+# WARNING: This may take a while to plot!
+#
+diamonds %>% 
+  # filter the "high clarity" diamonds
+  filter(clarity %in% c("VVS2", "VVS1", "IF")) %>%
+  # start the plot
+  ggplot() +
+  # creates subplots based on color and cut factors
+  facet_grid(rows = vars(color), cols = vars(cut), labeller = label_both) +
+  # for a given (color, cut) combination, creates a boxplot
+  geom_point(aes(x = price, y = carat, color = clarity)) +
+  # put the x and y axis *ticks* on a log10 scale; only the spacing changes!
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  # set the color palette for our color aesthetic, clarity
+  scale_color_brewer(palette = "Set1") +
+  # change the labels
+  labs(title = "Carats vs Price for High Clarity Diamonds, by Cut and Color", x = "Price", y = "Carats", color = "Clarity") + 
+  # some minor adjustments to plot elements
+  theme(
+    # center title
+    plot.title = element_text(hjust = 0.5),
+    # put the legend on the bottom
+    legend.position = "bottom", 
+    # change the facet rectangles to blue
+    strip.background = element_rect(fill= "dodgerblue", linetype = "solid"),
+    # change the facet text to white, size 12 font
+    strip.text = element_text(color = "white", size = 12)
+  )
+```
+
+
+
+### `Pokemon.csv`: Boxplot of `Attack` by `Legendary` Status, across Fire, Water, and Grass types (`Type1`)
+
+```{r}
+#| code-fold: true
+Pokemon <- read_csv("../Datasets/Pokemon.csv", show_col_types = FALSE)
+Pokemon %>%
+  filter(Type1 %in% c("Fire", "Water", "Grass")) %>%
+  ggplot() +
+  facet_grid(cols = vars(Type1)) +
+  geom_boxplot(aes(x = Legendary, y = Attack))
+```
+
+
+
+### `Pokemon.csv`: Boxplot of `Attack`, `Defense`, and `HP` in Fire, Water, and Grass types (`Type1`)
+
+```{r}
+#| code-fold: true
+Pokemon <- read_csv("../Datasets/Pokemon.csv", show_col_types = FALSE)
+pkmn <- Pokemon %>%
+  filter(Type1 %in% c("Fire", "Water", "Grass")) %>%
+  select(ID, Name, Type1, HP, Attack, Defense) %>%
+  # put into Long format so we can treat choice of Pokemon stat as a category
+  pivot_longer(cols = c("HP", "Attack", "Defense"), names_to = "Attribute", values_to = "Value")
+
+pkmn %>%
+  ggplot() +
+  facet_grid(cols = vars(Attribute)) + geom_boxplot(aes(x = Type1, y = Value, fill = Type1)) +
+  theme(legend.position = "none")
+```
+
+
+
+### `NBA_2022-2023_Regular.csv`: Boxplot of Field Goal Statistics in CA Teams, by Position
+
+```{r}
+#| code-fold: true
+NBA <- read_csv("../Datasets/NBA_2022-2023_Regular.csv", show_col_types = FALSE)
+NBA %>%
+  # look only at CA teams
+  filter(Tm %in% c("GSW", "LAL", "LAC", "SAC")) %>%
+  # put into Long format so we can treat type of FG statistic as a category
+  pivot_longer(cols = c("FG%", "3P%", "2P%"), names_to = "Stat", values_to = "Proportion") %>%
+  ggplot() +
+  # look across Positions
+  facet_grid(cols = vars(Pos)) +
+  # compare overall FG% to 3P% and 2P%
+  geom_boxplot(aes(x = Stat, y = Proportion, fill = Stat), position = "dodge") +
+  labs(title = "Proportion of Successful Field Goals by Position (CA Teams)") +
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+```
+
